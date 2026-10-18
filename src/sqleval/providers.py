@@ -194,7 +194,6 @@ def get_provider(spec: str) -> Provider:
             model=model,
             key_env="GITHUB_TOKEN",
             extra_headers={"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"},
-            fallback=(GITHUB_LEGACY_URL, model.split("/", 1)[-1]),
         )
     if kind == "openai":
         return OpenAICompatible(

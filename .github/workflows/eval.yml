@@ -32,6 +32,14 @@ jobs:
         run: |
           sqleval run --model gold --variant context --out /tmp/gold
           test "$(grep -c '"correct": true' /tmp/gold/gold@context.jsonl)" = "50"
+      - name: Probe GitHub Models
+        run: |
+          out=$(curl -sS -i -X POST https://models.github.ai/inference/chat/completions \
+            -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" -H "Content-Type: application/json" \
+            -d '{"model":"openai/gpt-4.1-mini","messages":[{"role":"user","content":"Reply with OK"}],"max_tokens":5}' 2>&1 | head -c 1500)
+          echo "$out"
+          echo "::notice title=GitHub Models probe::$(echo "$out" | head -c 1200 | sed ':a;N;$!ba;s/\n/%0A/g')"
       - name: Models with business context
         run: |
           args=""

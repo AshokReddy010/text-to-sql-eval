@@ -150,7 +150,7 @@ def test_cli_gold_run_and_report(db_path, tmp_path, capsys):
     assert json.loads((tmp_path / "r.json").read_text())["questions_total"] == 50
 
 
-def test_empty_response_falls_back_to_the_legacy_endpoint(monkeypatch):
+def test_empty_response_falls_back_to_a_configured_endpoint(monkeypatch):
     monkeypatch.setenv("GITHUB_TOKEN", "t")
     seen = []
 
@@ -165,6 +165,7 @@ def test_empty_response_falls_back_to_the_legacy_endpoint(monkeypatch):
 
     monkeypatch.setattr(providers._OPENER, "open", lambda req, timeout: R(open_(req, timeout).getvalue()))
     p = get_provider("github/openai/gpt-4.1-mini")
+    p.fallback = (providers.GITHUB_LEGACY_URL, "gpt-4.1-mini")
     assert p.complete("s", "u").text == "SELECT 1"
     assert seen == [(providers.GITHUB_URL, "openai/gpt-4.1-mini"), (providers.GITHUB_LEGACY_URL, "gpt-4.1-mini")]
     p.complete("s", "u")
