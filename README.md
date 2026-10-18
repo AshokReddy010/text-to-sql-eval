@@ -14,7 +14,7 @@
 | **Warehouse** | A retail business in DuckDB: `customers`, `products`, `orders`, `order_items`, `payments`, `returns` (~32k orders, 63k lines). Generated from a fixed seed, so it is reproducible and free to share. It has the traps real warehouses have: 6% cancelled orders, partial refunds, split-tender payments, customers who never ordered, nullable referral and promo columns, weekend and holiday seasonality. |
 | **Questions** | [50 business questions](benchmark/questions.yaml), each with a hand-written gold query and tags: basic, aggregation, joins, missing rows (anti-joins), window functions, dates, NULLs, top-N, and business rules that need the [glossary](benchmark/glossary.md). Thirteen require a specific row order. |
 | **Prompts** | `schema` (table definitions only) and `context` (plus three sample rows per table and the business glossary), to measure what context is worth. |
-| **Models** | Any OpenAI-compatible endpoint, Anthropic, Groq, and GitHub Models, which the daily workflow uses with its own token, so no API keys are stored anywhere. |
+| **Models** | Any OpenAI-compatible endpoint, Anthropic, Groq and GitHub Models. The daily workflow uses Groq's free tier (Llama 3.3 70B, GPT-OSS 120B, Qwen3 32B, Llama 3.1 8B) through a `GROQ_API_KEY` repository secret, and falls back to GitHub Models where that is enabled. Keys only ever come from the environment. |
 
 ## How answers are scored
 
@@ -58,14 +58,14 @@ src/sqleval/
   scoring.py     extraction, safety, sandboxed execution, result comparison, error classes
   runner.py      resumable runs -> results/runs/<model@variant>.jsonl
   report.py      accuracy, Wilson intervals, per-tag accuracy, failure mix, ablation
-.github/workflows/eval.yml   daily run on GitHub Models, commits results
+.github/workflows/eval.yml   daily run (Groq free tier or GitHub Models), commits results
 site/index.html              the leaderboard
 tests/                       scorer edge cases, gold self-check, resumability, provider retries
 ```
 
 ## Limits
 
-Fifty questions over one schema is a focused benchmark, not a general ranking of models: it measures business-analytics SQL in DuckDB's dialect with the context given here. The warehouse is synthetic. Model availability on GitHub Models changes over time; the workflow uses whichever preferred models the catalog currently serves, and a model that hits its daily quota shows as partially answered until it finishes.
+Fifty questions over one schema is a focused benchmark, not a general ranking of models: it measures business-analytics SQL in DuckDB's dialect with the context given here. The warehouse is synthetic. Free-tier models have daily token limits: a model that hits its quota shows as partially answered until a later run finishes it.
 
 ## License
 
