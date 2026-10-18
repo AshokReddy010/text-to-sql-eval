@@ -102,7 +102,7 @@ def test_openai_compatible_call_and_retry(monkeypatch):
             ).encode()
         )
 
-    monkeypatch.setattr(providers.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(providers._OPENER, "open", urlopen)
     r = get_provider("github/openai/gpt-4.1-mini").complete("sys", "user")
     assert r.text.startswith("```sql") and r.tokens_in == 10 and len(calls) == 2
     assert calls[0]["temperature"] == 0 and calls[0]["model"] == "openai/gpt-4.1-mini"
@@ -111,8 +111,8 @@ def test_openai_compatible_call_and_retry(monkeypatch):
 def test_daily_quota_is_not_waited_out(monkeypatch):
     monkeypatch.setenv("GITHUB_TOKEN", "t")
     monkeypatch.setattr(
-        providers.urllib.request,
-        "urlopen",
+        providers._OPENER,
+        "open",
         lambda req, timeout: (_ for _ in ()).throw(
             urllib.error.HTTPError(req.full_url, 429, "quota", {"Retry-After": "86400"}, io.BytesIO(b"daily"))
         ),
@@ -148,3 +148,24 @@ def test_cli_gold_run_and_report(db_path, tmp_path, capsys):
     assert main(["--db", str(db_path), "run", "--model", "gold", "--only", "q01", "q02", "--out", str(out)]) == 0
     assert main(["--db", str(db_path), "report", "--runs", str(out), "-o", str(tmp_path / "r.json")]) == 0
     assert json.loads((tmp_path / "r.json").read_text())["questions_total"] == 50
+
+
+def test_empty_response_falls_back_to_the_legacy_endpoint(monkeypatch):
+    monkeypatch.setenv("GITHUB_TOKEN", "t")
+    seen = []
+
+    def open_(req, timeout):
+        seen.append((req.full_url, json.loads(req.data)["model"]))
+        if "models.github.ai" in req.full_url:
+            return io.BytesIO(b"")
+        return io.BytesIO(json.dumps({"choices": [{"message": {"content": "SELECT 1"}}]}).encode())
+
+    class R(io.BytesIO):
+        status, headers = 200, {"Content-Type": "text/plain"}
+
+    monkeypatch.setattr(providers._OPENER, "open", lambda req, timeout: R(open_(req, timeout).getvalue()))
+    p = get_provider("github/openai/gpt-4.1-mini")
+    assert p.complete("s", "u").text == "SELECT 1"
+    assert seen == [(providers.GITHUB_URL, "openai/gpt-4.1-mini"), (providers.GITHUB_LEGACY_URL, "gpt-4.1-mini")]
+    p.complete("s", "u")
+    assert seen[-1][0] == providers.GITHUB_LEGACY_URL  # stays on the endpoint that works

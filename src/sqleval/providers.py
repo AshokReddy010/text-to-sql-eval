@@ -56,6 +56,16 @@ class Provider:
         self._last = time.monotonic()
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """A redirected POST silently becomes a GET with no body; fail loudly instead."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # type: ignore[no-untyped-def]
+        raise ProviderError(f"HTTP {code} redirect from {req.full_url} to {newurl}", fatal=True)
+
+
+_OPENER = urllib.request.build_opener(_NoRedirect)
+
+
 def _post(url: str, payload: dict[str, Any], headers: dict[str, str], retries: int = 5, timeout: float = 120) -> Any:
     body = json.dumps(payload).encode()
     last = ""
@@ -64,8 +74,16 @@ def _post(url: str, payload: dict[str, Any], headers: dict[str, str], retries: i
             url, data=body, method="POST", headers={"Content-Type": "application/json", **headers}
         )
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as r:
-                return json.loads(r.read().decode())
+            with _OPENER.open(req, timeout=timeout) as r:
+                raw = r.read().decode(errors="replace")
+                if not raw.strip():
+                    raise ProviderError(
+                        f"empty response (HTTP {r.status}, {r.headers.get('Content-Type')}) from {url}", fatal=True
+                    )
+                try:
+                    return json.loads(raw)
+                except json.JSONDecodeError as error:
+                    raise ProviderError(f"non-JSON response from {url}: {raw[:200]}", fatal=True) from error
         except urllib.error.HTTPError as error:
             detail = error.read().decode(errors="replace")[:300]
             last = f"HTTP {error.code}: {detail}"
@@ -89,12 +107,23 @@ class OpenAICompatible(Provider):
     model: str = ""
     key_env: str = ""
     extra_headers: dict[str, str] = field(default_factory=dict)
+    fallback: tuple[str, str] | None = None  # (url, model) tried once if the primary endpoint is unusable
 
     def complete(self, system: str, user: str, gold: str = "") -> Reply:
         key = os.environ.get(self.key_env, "")
         if not key:
             raise ProviderError(f"{self.key_env} is not set")
         self._pace()
+        try:
+            return self._call(key, system, user)
+        except ProviderError as error:
+            if not (error.fatal and self.fallback):
+                raise
+            self.url, self.model = self.fallback  # switch for the rest of the run
+            self.fallback = None
+            return self._call(key, system, user)
+
+    def _call(self, key: str, system: str, user: str) -> Reply:
         t = time.monotonic()
         data = _post(
             self.url,
@@ -147,6 +176,7 @@ class Gold(Provider):
 
 
 GITHUB_URL = "https://models.github.ai/inference/chat/completions"
+GITHUB_LEGACY_URL = "https://models.inference.ai.azure.com/chat/completions"  # older endpoint, model names unprefixed
 
 
 def get_provider(spec: str) -> Provider:
@@ -163,7 +193,8 @@ def get_provider(spec: str) -> Provider:
             url=GITHUB_URL,
             model=model,
             key_env="GITHUB_TOKEN",
-            extra_headers={"Accept": "application/vnd.github+json"},
+            extra_headers={"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"},
+            fallback=(GITHUB_LEGACY_URL, model.split("/", 1)[-1]),
         )
     if kind == "openai":
         return OpenAICompatible(
