@@ -111,8 +111,8 @@ def run_config(
             results[q.id] = rec
             stats["provider_errors"] += 1
             log.warning("%s %s: provider error: %s", config, q.id, error)
-            if "rate limited" in str(error):
-                break  # a quota is exhausted; resume on the next run
+            if "rate limited" in str(error) or error.fatal:
+                break  # a quota is exhausted or the model is not available; resume on the next run
             continue
         sql, execution, verdict = score(con, q.sql, reply.text, q.ordered)
         rec.update(

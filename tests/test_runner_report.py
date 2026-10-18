@@ -121,6 +121,23 @@ def test_daily_quota_is_not_waited_out(monkeypatch):
         get_provider("github/x/y").complete("s", "u")
 
 
+def test_auto_models_falls_back_when_catalog_fails(monkeypatch):
+    monkeypatch.setattr(providers, "github_catalog", lambda: (_ for _ in ()).throw(ValueError("empty body")))
+    assert providers.auto_models(limit=2) == [f"github/{m}" for m in providers.GITHUB_PREFERRED[:2]]
+
+
+def test_unknown_model_stops_the_config(con, tmp_path):
+    class Unknown(Provider):
+        calls = 0
+
+        def complete(self, system, user, gold=""):
+            Unknown.calls += 1
+            raise ProviderError("HTTP 404: unknown model", fatal=True)
+
+    stats = run_config(Unknown("github/x/nope"), "context", con, load_questions()[:5], tmp_path)
+    assert stats["provider_errors"] == 1 and Unknown.calls == 1
+
+
 def test_auto_models(monkeypatch):
     monkeypatch.setattr(providers, "github_catalog", lambda: ["openai/gpt-4.1-mini", "microsoft/Phi-4", "other/x"])
     assert providers.auto_models() == ["github/openai/gpt-4.1-mini", "github/microsoft/Phi-4"]

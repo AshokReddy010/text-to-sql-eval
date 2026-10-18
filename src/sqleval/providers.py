@@ -22,7 +22,14 @@ from typing import Any
 
 
 class ProviderError(RuntimeError):
-    """The provider could not produce a reply (after retries). Recorded and retried on the next run."""
+    """The provider could not produce a reply (after retries). Recorded and retried on the next run.
+
+    `fatal` marks errors that will repeat for every question (unknown model, no access), so the run moves on.
+    """
+
+    def __init__(self, message: str, fatal: bool = False):
+        super().__init__(message)
+        self.fatal = fatal
 
 
 @dataclass
@@ -69,7 +76,7 @@ def _post(url: str, payload: dict[str, Any], headers: dict[str, str], retries: i
                     raise ProviderError(f"rate limited for {delay:.0f}s: {detail}") from error
                 time.sleep(delay)
                 continue
-            raise ProviderError(last) from error
+            raise ProviderError(last, fatal=error.code in (400, 401, 403, 404)) from error
         except (urllib.error.URLError, TimeoutError) as error:
             last = f"{type(error).__name__}: {error}"
             time.sleep(2**attempt)
@@ -188,12 +195,25 @@ def github_catalog() -> list[str]:
     token = os.environ.get("GITHUB_TOKEN", "")
     req = urllib.request.Request(
         "https://models.github.ai/catalog/models",
-        headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"},
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
     )
     with urllib.request.urlopen(req, timeout=60) as r:
-        return [m["id"] for m in json.loads(r.read().decode())]
+        body = r.read().decode().strip()
+    data = json.loads(body) if body else []
+    items = data.get("models", data) if isinstance(data, dict) else data
+    return [m["id"] for m in items if isinstance(m, dict) and "id" in m]
 
 
 def auto_models(limit: int = 6) -> list[str]:
-    available = set(github_catalog())
-    return [f"github/{m}" for m in GITHUB_PREFERRED if m in available][:limit]
+    """Preferred GitHub Models that the catalog lists; if the catalog cannot be read, try them all (a model
+    that is not served fails on its first question and is skipped)."""
+    try:
+        available = set(github_catalog())
+    except Exception:  # the catalog is a convenience, not a requirement
+        available = set()
+    chosen = [m for m in GITHUB_PREFERRED if m in available] if available else list(GITHUB_PREFERRED)
+    return [f"github/{m}" for m in chosen][:limit]
