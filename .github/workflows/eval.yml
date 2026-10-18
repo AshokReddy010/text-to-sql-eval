@@ -21,6 +21,9 @@ jobs:
     timeout-minutes: 150
     env:
       GITHUB_TOKEN: ${{ github.token }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      # Groq's free tier is used when the repository has a GROQ_API_KEY secret; otherwise GitHub Models.
+      GROQ_MODELS: groq/llama-3.3-70b-versatile groq/openai/gpt-oss-120b groq/qwen/qwen3-32b groq/llama-3.1-8b-instant
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -32,27 +35,20 @@ jobs:
         run: |
           sqleval run --model gold --variant context --out /tmp/gold
           test "$(grep -c '"correct": true' /tmp/gold/gold@context.jsonl)" = "50"
-      - name: Probe GitHub Models
-        run: |
-          probe() {
-            curl -sS "$@" -w ' [HTTP %{http_code}, %{content_type}, %{size_download} bytes]' 2>&1 | tr -d '\r' | tr '\n' ' ' | head -c 400
-          }
-          body='{"model":"openai/gpt-4.1-mini","messages":[{"role":"user","content":"Say hi"}],"max_tokens":5}'
-          a=$(probe -X POST https://models.github.ai/inference/chat/completions -H "Authorization: Bearer $GITHUB_TOKEN" -H "Content-Type: application/json" -d "$body")
-          b=$(probe -X POST https://models.github.ai/inference/chat/completions -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/json" -H "Content-Type: application/json" -d "$body")
-          c=$(probe https://models.github.ai/catalog/models -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json")
-          d=$(probe https://api.github.com/rate_limit -H "Authorization: Bearer $GITHUB_TOKEN")
-          echo "::notice title=GitHub Models probe::no accept: $a || json accept: $b || catalog: $c || api: $d"
       - name: Models with business context
         run: |
+          models="${{ github.event.inputs.models || 'auto' }}"
+          if [ "$models" = "auto" ] && [ -n "$GROQ_API_KEY" ]; then models="$GROQ_MODELS"; fi
           args=""
-          for m in ${{ github.event.inputs.models || 'auto' }}; do args="$args --model $m"; done
+          for m in $models; do args="$args --model $m"; done
           set -o pipefail
           sqleval run $args --variant context --budget-minutes 80 2>&1 | tee run.log || { echo "::error title=eval failed::$(tail -c 3000 run.log | sed ':a;N;$!ba;s/\n/%0A/g')"; exit 1; }
       - name: Ablation without context (two models)
         run: |
           set -o pipefail
-          sqleval run --model github/openai/gpt-4.1-mini --model github/openai/gpt-4o-mini --variant schema --budget-minutes 25 2>&1 | tee abl.log || { echo "::error title=ablation failed::$(tail -c 3000 abl.log | sed ':a;N;$!ba;s/\n/%0A/g')"; exit 1; }
+          if [ -n "$GROQ_API_KEY" ]; then a="--model groq/llama-3.3-70b-versatile --model groq/llama-3.1-8b-instant";
+          else a="--model github/openai/gpt-4.1-mini --model github/openai/gpt-4o-mini"; fi
+          sqleval run $a --variant schema --budget-minutes 25 2>&1 | tee abl.log || { echo "::error title=ablation failed::$(tail -c 3000 abl.log | sed ':a;N;$!ba;s/\n/%0A/g')"; exit 1; }
       - name: Report
         if: always()
         run: sqleval report -o results/report.json

@@ -80,6 +80,11 @@ def _post(url: str, payload: dict[str, Any], headers: dict[str, str], retries: i
                     raise ProviderError(
                         f"empty response (HTTP {r.status}, {r.headers.get('Content-Type')}) from {url}", fatal=True
                     )
+                if raw.strip() == "OK" and "models.github.ai" in url:
+                    raise ProviderError(
+                        "GitHub Models answered 'OK' instead of a completion: it is not enabled for this account",
+                        fatal=True,
+                    )
                 try:
                     return json.loads(raw)
                 except json.JSONDecodeError as error:
@@ -130,7 +135,7 @@ class OpenAICompatible(Provider):
             {
                 "model": self.model,
                 "temperature": 0,
-                "max_tokens": 1200,
+                "max_tokens": 2000,
                 "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
             },
             {"Authorization": f"Bearer {key}", **self.extra_headers},
@@ -157,7 +162,7 @@ class Anthropic(Provider):
             "https://api.anthropic.com/v1/messages",
             {
                 "model": self.model,
-                "max_tokens": 1200,
+                "max_tokens": 2000,
                 "temperature": 0,
                 "system": system,
                 "messages": [{"role": "user", "content": user}],

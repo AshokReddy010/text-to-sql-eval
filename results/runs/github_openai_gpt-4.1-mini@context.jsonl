@@ -1,1 +1,0 @@
-{"at": "2026-10-18T23:18:04.192314+00:00", "category": "provider_error", "config": "github/openai/gpt-4.1-mini@context", "correct": false, "detail": "non-JSON response from https://models.github.ai/inference/chat/completions: OK\r\n", "hash": "f3bd868fbb68", "id": "q01", "lenient": false}
