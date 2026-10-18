@@ -14,6 +14,7 @@ import argparse
 import json
 import logging
 import sys
+import time
 from pathlib import Path
 
 from . import __version__
@@ -46,6 +47,9 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--only", nargs="*", help="question ids to run")
     r.add_argument("--max-calls", type=int, help="stop after this many model calls per configuration")
     r.add_argument("--out", type=Path, default=RUNS)
+    r.add_argument(
+        "--budget-minutes", type=float, help="stop starting new calls after this long (the rest resumes next run)"
+    )
     rep = sub.add_parser("report")
     rep.add_argument("--runs", type=Path, default=RUNS)
     rep.add_argument("-o", "--output", type=Path, default=Path("results/report.json"))
@@ -68,9 +72,10 @@ def main(argv: list[str] | None = None) -> int:
         models: list[str] = []
         for m in args.model:
             models += auto_models() if m == "auto" else [m]
+        deadline = time.monotonic() + args.budget_minutes * 60 if args.budget_minutes else None
         for m in models:
             for v in args.variant or ["context"]:
-                stats = run_config(get_provider(m), v, con, qs, args.out, args.max_calls)
+                stats = run_config(get_provider(m), v, con, qs, args.out, args.max_calls, deadline)
                 print(f"{m}@{v}: {stats}")
         return 0
     if args.cmd == "report":

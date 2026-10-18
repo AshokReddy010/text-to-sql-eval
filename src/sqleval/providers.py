@@ -66,7 +66,7 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 _OPENER = urllib.request.build_opener(_NoRedirect)
 
 
-def _post(url: str, payload: dict[str, Any], headers: dict[str, str], retries: int = 5, timeout: float = 120) -> Any:
+def _post(url: str, payload: dict[str, Any], headers: dict[str, str], retries: int = 4, timeout: float = 90) -> Any:
     body = json.dumps(payload).encode()
     last = ""
     for attempt in range(retries):
@@ -90,7 +90,7 @@ def _post(url: str, payload: dict[str, Any], headers: dict[str, str], retries: i
             if error.code == 429 or error.code >= 500:
                 retry_after = error.headers.get("Retry-After") if error.headers else None
                 delay = float(retry_after) if retry_after and retry_after.isdigit() else 2**attempt * 3
-                if delay > 300:  # a daily quota: give up now, the next run resumes
+                if delay > 90:  # a daily quota: give up now, the next run resumes
                     raise ProviderError(f"rate limited for {delay:.0f}s: {detail}") from error
                 time.sleep(delay)
                 continue

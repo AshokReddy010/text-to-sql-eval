@@ -11,6 +11,7 @@ import hashlib
 import json
 import logging
 import re
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -87,7 +88,9 @@ def run_config(
     questions: list[Question],
     out_dir: Path,
     max_calls: int | None = None,
+    deadline: float | None = None,
 ) -> dict[str, int]:
+    """Score every question not yet scored. Stops early at `max_calls` calls or at `deadline` (time.monotonic())."""
     config = config_name(provider.name, variant)
     path = out_dir / f"{slug(config)}.jsonl"
     results = load_results(path)
@@ -99,7 +102,7 @@ def run_config(
         if prev and prev.get("hash") == h and prev.get("category") != "provider_error":
             stats["skipped"] += 1
             continue
-        if max_calls is not None and calls >= max_calls:
+        if (max_calls is not None and calls >= max_calls) or (deadline is not None and time.monotonic() > deadline):
             break
         system, user = build_prompt(q.question, variant, con)
         calls += 1
