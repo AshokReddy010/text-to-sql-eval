@@ -36,9 +36,12 @@ jobs:
         run: |
           args=""
           for m in ${{ github.event.inputs.models || 'auto' }}; do args="$args --model $m"; done
-          sqleval run $args --variant context
+          set -o pipefail
+          sqleval run $args --variant context 2>&1 | tee run.log || { echo "::error title=eval failed::$(tail -c 3000 run.log | sed ':a;N;$!ba;s/\n/%0A/g')"; exit 1; }
       - name: Ablation without context (two models)
-        run: sqleval run --model github/openai/gpt-4.1-mini --model github/openai/gpt-4o-mini --variant schema
+        run: |
+          set -o pipefail
+          sqleval run --model github/openai/gpt-4.1-mini --model github/openai/gpt-4o-mini --variant schema 2>&1 | tee abl.log || { echo "::error title=ablation failed::$(tail -c 3000 abl.log | sed ':a;N;$!ba;s/\n/%0A/g')"; exit 1; }
       - name: Report
         if: always()
         run: sqleval report -o results/report.json
