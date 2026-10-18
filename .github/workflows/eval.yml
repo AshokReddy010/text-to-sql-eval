@@ -34,13 +34,15 @@ jobs:
           test "$(grep -c '"correct": true' /tmp/gold/gold@context.jsonl)" = "50"
       - name: Probe GitHub Models
         run: |
-          out=$(curl -sS -X POST https://models.github.ai/inference/chat/completions \
-            -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" -H "Content-Type: application/json" \
-            -d '{"model":"openai/gpt-4.1-mini","messages":[{"role":"user","content":"Reply with OK"}],"max_tokens":5}' \
-            -w ' [HTTP %{http_code}, %{content_type}, %{size_download} bytes]' 2>&1 | tr -d '\r' | tr '\n' ' ' | head -c 1200)
-          echo "$out"
-          echo "::notice title=GitHub Models probe::$out"
+          probe() {
+            curl -sS "$@" -w ' [HTTP %{http_code}, %{content_type}, %{size_download} bytes]' 2>&1 | tr -d '\r' | tr '\n' ' ' | head -c 400
+          }
+          body='{"model":"openai/gpt-4.1-mini","messages":[{"role":"user","content":"Say hi"}],"max_tokens":5}'
+          a=$(probe -X POST https://models.github.ai/inference/chat/completions -H "Authorization: Bearer $GITHUB_TOKEN" -H "Content-Type: application/json" -d "$body")
+          b=$(probe -X POST https://models.github.ai/inference/chat/completions -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/json" -H "Content-Type: application/json" -d "$body")
+          c=$(probe https://models.github.ai/catalog/models -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json")
+          d=$(probe https://api.github.com/rate_limit -H "Authorization: Bearer $GITHUB_TOKEN")
+          echo "::notice title=GitHub Models probe::no accept: $a || json accept: $b || catalog: $c || api: $d"
       - name: Models with business context
         run: |
           args=""
