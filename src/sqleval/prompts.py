@@ -12,7 +12,16 @@ import duckdb
 
 from .warehouse import SCHEMA
 
-ROOT = Path(__file__).resolve().parents[2]
+
+def _root() -> Path:
+    """The repository root: the benchmark files live there, not inside the installed package."""
+    for base in (Path.cwd(), *Path.cwd().parents, Path(__file__).resolve().parents[2]):
+        if (base / "benchmark" / "questions.yaml").exists():
+            return base
+    raise FileNotFoundError("benchmark/questions.yaml not found; run sqleval from the repository")
+
+
+ROOT = _root()
 GLOSSARY = ROOT / "benchmark" / "glossary.md"
 VARIANTS = ("schema", "context")
 
