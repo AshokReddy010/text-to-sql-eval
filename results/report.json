@@ -1,0 +1,677 @@
+{
+ "generated_at": "2026-10-18T20:20:19.125844+00:00",
+ "questions_total": 50,
+ "configs": [],
+ "questions": [
+  {
+   "id": "q01",
+   "question": "How many customers signed up in 2025?",
+   "tags": [
+    "basic",
+    "date"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT count(*) FROM customers WHERE signup_date >= DATE '2025-01-01' AND signup_date < DATE '2026-01-01'",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q02",
+   "question": "How many products are discontinued?",
+   "tags": [
+    "basic"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT count(*) FROM products WHERE discontinued",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q03",
+   "question": "How many orders were cancelled?",
+   "tags": [
+    "basic"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT count(*) FROM orders WHERE status = 'cancelled'",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q04",
+   "question": "List the SKU and name of every discontinued product in the Electronics category, sorted by SKU.",
+   "tags": [
+    "basic"
+   ],
+   "ordered": true,
+   "gold_sql": "SELECT sku, name FROM products WHERE discontinued AND category = 'Electronics' ORDER BY sku",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q05",
+   "question": "How many orders (including cancelled ones) were placed through each channel? Return the channel and the count.",
+   "tags": [
+    "aggregation"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT channel, count(*) FROM orders GROUP BY channel",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q06",
+   "question": "What is the average list price of products in each category, rounded to 2 decimals? Return category and average.",
+   "tags": [
+    "aggregation"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT category, round(avg(list_price), 2) FROM products GROUP BY category",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q07",
+   "question": "What was total revenue in 2025?",
+   "tags": [
+    "business_rule",
+    "join",
+    "date"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT sum(i.quantity * i.unit_price * (1 - i.discount))\nFROM order_items i JOIN orders o USING (order_id)\nWHERE o.status <> 'cancelled' AND o.order_date >= DATE '2025-01-01' AND o.order_date < DATE '2026-01-01'",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q08",
+   "question": "What is the average order value across all valid orders, rounded to 2 decimals?",
+   "tags": [
+    "business_rule",
+    "join"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT round(sum(i.quantity * i.unit_price * (1 - i.discount)) / count(DISTINCT o.order_id), 2)\nFROM orders o JOIN order_items i USING (order_id) WHERE o.status <> 'cancelled'",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q09",
+   "question": "Which customer region generated the most revenue in 2025? Return the region and its revenue.",
+   "tags": [
+    "business_rule",
+    "join",
+    "ranking"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT c.region, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue\nFROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025\nGROUP BY c.region ORDER BY revenue DESC LIMIT 1",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q10",
+   "question": "Show revenue by product category for 2026 so far, highest first. Return category and revenue.",
+   "tags": [
+    "business_rule",
+    "join"
+   ],
+   "ordered": true,
+   "gold_sql": "SELECT p.category, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue\nFROM orders o JOIN order_items i USING (order_id) JOIN products p USING (product_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2026\nGROUP BY p.category ORDER BY revenue DESC",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q11",
+   "question": "How many customers have never placed any order at all, counting cancelled orders as orders?",
+   "tags": [
+    "anti_join"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT count(*) FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id)",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q12",
+   "question": "How many customers have no valid orders?",
+   "tags": [
+    "anti_join",
+    "business_rule"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT count(*) FROM customers c\nWHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id AND o.status <> 'cancelled')",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q13",
+   "question": "What were the top 5 products by units sold in valid orders during 2025? Return product name and units, most units first.",
+   "tags": [
+    "ranking",
+    "join",
+    "business_rule"
+   ],
+   "ordered": true,
+   "gold_sql": "SELECT p.name, sum(i.quantity) AS units\nFROM orders o JOIN order_items i USING (order_id) JOIN products p USING (product_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025\nGROUP BY p.product_id, p.name ORDER BY units DESC LIMIT 5",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q14",
+   "question": "Show revenue for each month of 2025 in calendar order. Return the month number (1-12) and revenue.",
+   "tags": [
+    "date",
+    "business_rule"
+   ],
+   "ordered": true,
+   "gold_sql": "SELECT month(o.order_date) AS m, sum(i.quantity * i.unit_price * (1 - i.discount))\nFROM orders o JOIN order_items i USING (order_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025\nGROUP BY m ORDER BY m",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q15",
+   "question": "For each month of 2025, show the month number, that month's revenue and the running total of revenue from January, in calendar order.",
+   "tags": [
+    "window",
+    "date",
+    "business_rule"
+   ],
+   "ordered": true,
+   "gold_sql": "WITH m AS (\n  SELECT month(o.order_date) AS m, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue\n  FROM orders o JOIN order_items i USING (order_id)\n  WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 GROUP BY m)\nSELECT m, revenue, sum(revenue) OVER (ORDER BY m) FROM m ORDER BY m",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q16",
+   "question": "For each month from January to June 2026, what was the percentage change in revenue versus the previous month (January compares with December 2025)? Return the month number and the change rounded to 1 decimal, in calendar order.",
+   "tags": [
+    "window",
+    "date",
+    "business_rule"
+   ],
+   "ordered": true,
+   "gold_sql": "WITH m AS (\n  SELECT date_trunc('month', o.order_date) AS mo, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue\n  FROM orders o JOIN order_items i USING (order_id)\n  WHERE o.status <> 'cancelled' AND o.order_date >= DATE '2025-12-01' GROUP BY mo),\ng AS (SELECT mo, round((revenue / lag(revenue) OVER (ORDER BY mo) - 1) * 100, 1) AS pct FROM m)\nSELECT month(mo), pct FROM g WHERE year(mo) = 2026 ORDER BY mo",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q17",
+   "question": "How many active customers are there?",
+   "tags": [
+    "business_rule",
+    "date"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT count(DISTINCT customer_id) FROM orders WHERE status <> 'cancelled' AND order_date >= DATE '2026-04-01'",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q18",
+   "question": "Among customers with at least one valid order, what percentage are repeat customers? Round to 1 decimal.",
+   "tags": [
+    "business_rule",
+    "aggregation"
+   ],
+   "ordered": false,
+   "gold_sql": "WITH c AS (SELECT customer_id, count(*) AS n FROM orders WHERE status <> 'cancelled' GROUP BY customer_id)\nSELECT round(100.0 * count(*) FILTER (WHERE n >= 2) / count(*), 1) FROM c",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q19",
+   "question": "What is the overall return rate? Round to 2 decimals.",
+   "tags": [
+    "business_rule",
+    "join"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT round(100.0 * count(DISTINCT r.order_id) / count(DISTINCT o.order_id), 2)\nFROM orders o LEFT JOIN returns r USING (order_id)\nWHERE o.status IN ('delivered', 'returned')",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q20",
+   "question": "For each product category, what is the most common return reason? Return category, reason and the number of returns with that reason, sorted by category.",
+   "tags": [
+    "join",
+    "ranking"
+   ],
+   "ordered": true,
+   "gold_sql": "WITH c AS (\n  SELECT p.category, r.reason, count(*) AS n,\n         row_number() OVER (PARTITION BY p.category ORDER BY count(*) DESC) AS rk\n  FROM returns r JOIN products p USING (product_id) GROUP BY p.category, r.reason)\nSELECT category, reason, n FROM c WHERE rk = 1 ORDER BY category",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q21",
+   "question": "What was the gross margin percentage of each product category in 2025? Return category and margin rounded to 1 decimal.",
+   "tags": [
+    "business_rule",
+    "join"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT p.category,\n       round(100 * (sum(i.quantity * i.unit_price * (1 - i.discount)) - sum(i.quantity * p.unit_cost))\n             / sum(i.quantity * i.unit_price * (1 - i.discount)), 1)\nFROM orders o JOIN order_items i USING (order_id) JOIN products p USING (product_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 GROUP BY p.category",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q22",
+   "question": "What was net revenue after refunds for orders placed in 2025? Round to 2 decimals.",
+   "tags": [
+    "business_rule",
+    "join"
+   ],
+   "ordered": false,
+   "gold_sql": "WITH o AS (SELECT order_id FROM orders WHERE status <> 'cancelled' AND year(order_date) = 2025)\nSELECT round((SELECT sum(quantity * unit_price * (1 - discount)) FROM order_items WHERE order_id IN (SELECT order_id FROM o))\n           - (SELECT coalesce(sum(refund_amount), 0) FROM returns WHERE order_id IN (SELECT order_id FROM o)), 2)",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q23",
+   "question": "How many orders were paid using more than one payment method?",
+   "tags": [
+    "aggregation"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT count(*) FROM (SELECT order_id FROM payments GROUP BY order_id HAVING count(DISTINCT method) > 1)",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q24",
+   "question": "What share of the total amount paid in 2025 came from each payment method? Use the payment timestamp's year. Return method and percentage rounded to 1 decimal.",
+   "tags": [
+    "aggregation",
+    "date"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT method, round(100 * sum(amount) / sum(sum(amount)) OVER (), 1)\nFROM payments WHERE year(paid_at) = 2025 GROUP BY method",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q25",
+   "question": "What is the average number of days to ship for each channel? Round to 2 decimals. Return channel and average days.",
+   "tags": [
+    "date",
+    "aggregation",
+    "nulls"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT channel, round(avg(ship_date - order_date), 2) FROM orders WHERE ship_date IS NOT NULL GROUP BY channel",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q26",
+   "question": "On which day of the week were the most valid orders placed? Return the day's English name, such as Monday.",
+   "tags": [
+    "date",
+    "ranking",
+    "business_rule"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT dayname(order_date) FROM orders WHERE status <> 'cancelled' GROUP BY 1 ORDER BY count(*) DESC LIMIT 1",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q27",
+   "question": "How much 2025 revenue came from orders that used a promo code? Round to 2 decimals.",
+   "tags": [
+    "business_rule",
+    "nulls",
+    "join"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT round(sum(i.quantity * i.unit_price * (1 - i.discount)), 2)\nFROM orders o JOIN order_items i USING (order_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 AND o.promo_code IS NOT NULL",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q28",
+   "question": "Which promo code was used on the most valid orders, and on how many?",
+   "tags": [
+    "ranking",
+    "nulls"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT promo_code, count(*) FROM orders WHERE status <> 'cancelled' AND promo_code IS NOT NULL\nGROUP BY promo_code ORDER BY count(*) DESC LIMIT 1",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q29",
+   "question": "How many customers were referred by another customer?",
+   "tags": [
+    "basic",
+    "nulls"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT count(*) FROM customers WHERE referred_by IS NOT NULL",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q30",
+   "question": "Who are the 3 customers who referred the most other customers? Return the referrer's customer_id, name and the number of customers they referred, most first; break ties by lower customer_id.",
+   "tags": [
+    "join",
+    "ranking"
+   ],
+   "ordered": true,
+   "gold_sql": "SELECT r.customer_id, r.name, count(*) AS n\nFROM customers c JOIN customers r ON c.referred_by = r.customer_id\nGROUP BY r.customer_id, r.name ORDER BY n DESC, r.customer_id LIMIT 3",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q31",
+   "question": "What was the 2025 revenue from referred customers? Round to 2 decimals.",
+   "tags": [
+    "business_rule",
+    "join",
+    "nulls"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT round(sum(i.quantity * i.unit_price * (1 - i.discount)), 2)\nFROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 AND c.referred_by IS NOT NULL",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q32",
+   "question": "What was the average order value in 2025 for each customer segment? Return segment and AOV rounded to 2 decimals.",
+   "tags": [
+    "business_rule",
+    "join"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT c.segment, round(sum(i.quantity * i.unit_price * (1 - i.discount)) / count(DISTINCT o.order_id), 2)\nFROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 GROUP BY c.segment",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q33",
+   "question": "Of the customers who signed up in 2025, how many placed their first valid order in the same calendar month they signed up?",
+   "tags": [
+    "date",
+    "business_rule",
+    "join"
+   ],
+   "ordered": false,
+   "gold_sql": "WITH f AS (SELECT customer_id, min(order_date) AS first_order FROM orders WHERE status <> 'cancelled' GROUP BY customer_id)\nSELECT count(*) FROM customers c JOIN f USING (customer_id)\nWHERE year(c.signup_date) = 2025 AND date_trunc('month', f.first_order) = date_trunc('month', c.signup_date)",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q34",
+   "question": "On average, how many days pass between a customer's signup and their first valid order, for customers who have placed one? Round to 1 decimal.",
+   "tags": [
+    "date",
+    "business_rule",
+    "join"
+   ],
+   "ordered": false,
+   "gold_sql": "WITH f AS (SELECT customer_id, min(order_date) AS first_order FROM orders WHERE status <> 'cancelled' GROUP BY customer_id)\nSELECT round(avg(f.first_order - c.signup_date), 1) FROM customers c JOIN f USING (customer_id)",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q35",
+   "question": "For each product category, which product had the highest revenue in 2025? Return category, product name and revenue, sorted by category.",
+   "tags": [
+    "window",
+    "ranking",
+    "business_rule"
+   ],
+   "ordered": true,
+   "gold_sql": "WITH r AS (\n  SELECT p.category, p.name, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue,\n         row_number() OVER (PARTITION BY p.category ORDER BY sum(i.quantity * i.unit_price * (1 - i.discount)) DESC) AS rk\n  FROM orders o JOIN order_items i USING (order_id) JOIN products p USING (product_id)\n  WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 GROUP BY p.category, p.product_id, p.name)\nSELECT category, name, revenue FROM r WHERE rk = 1 ORDER BY category",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q36",
+   "question": "What was the median order value of valid orders placed in 2025? Round to 2 decimals.",
+   "tags": [
+    "business_rule",
+    "aggregation"
+   ],
+   "ordered": false,
+   "gold_sql": "WITH v AS (\n  SELECT o.order_id, sum(i.quantity * i.unit_price * (1 - i.discount)) AS value\n  FROM orders o JOIN order_items i USING (order_id)\n  WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 GROUP BY o.order_id)\nSELECT round(median(value), 2) FROM v",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q37",
+   "question": "How many customers have more than 20 valid orders?",
+   "tags": [
+    "aggregation",
+    "business_rule"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT count(*) FROM (SELECT customer_id FROM orders WHERE status <> 'cancelled' GROUP BY customer_id HAVING count(*) > 20)",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q38",
+   "question": "Who are the top 10 customers by lifetime revenue? Return customer_id, name and revenue, highest first.",
+   "tags": [
+    "ranking",
+    "business_rule",
+    "join"
+   ],
+   "ordered": true,
+   "gold_sql": "SELECT c.customer_id, c.name, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue\nFROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)\nWHERE o.status <> 'cancelled' GROUP BY c.customer_id, c.name ORDER BY revenue DESC LIMIT 10",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q39",
+   "question": "How many distinct states do the customers who placed a valid order in June 2026 come from?",
+   "tags": [
+    "date",
+    "join",
+    "business_rule"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT count(DISTINCT c.state) FROM orders o JOIN customers c USING (customer_id)\nWHERE o.status <> 'cancelled' AND o.order_date >= DATE '2026-06-01' AND o.order_date < DATE '2026-07-01'",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q40",
+   "question": "How many valid orders were placed on Saturdays or Sundays in 2025?",
+   "tags": [
+    "date",
+    "business_rule"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT count(*) FROM orders WHERE status <> 'cancelled' AND year(order_date) = 2025 AND dayofweek(order_date) IN (0, 6)",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q41",
+   "question": "By what percentage did revenue from November 20 to December 22 (inclusive) grow in 2025 compared with the same dates in 2024? Round to 1 decimal.",
+   "tags": [
+    "date",
+    "business_rule"
+   ],
+   "ordered": false,
+   "gold_sql": "WITH r AS (\n  SELECT year(o.order_date) AS y, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue\n  FROM orders o JOIN order_items i USING (order_id)\n  WHERE o.status <> 'cancelled'\n    AND ((o.order_date BETWEEN DATE '2025-11-20' AND DATE '2025-12-22') OR (o.order_date BETWEEN DATE '2024-11-20' AND DATE '2024-12-22'))\n  GROUP BY y)\nSELECT round(((SELECT revenue FROM r WHERE y = 2025) / (SELECT revenue FROM r WHERE y = 2024) - 1) * 100, 1)",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q42",
+   "question": "How many orders with status shipped, delivered or returned have no ship date?",
+   "tags": [
+    "nulls"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT count(*) FROM orders WHERE status IN ('shipped', 'delivered', 'returned') AND ship_date IS NULL",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q43",
+   "question": "How many products have never been sold in a valid order?",
+   "tags": [
+    "anti_join",
+    "business_rule"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT count(*) FROM products p WHERE NOT EXISTS (\n  SELECT 1 FROM order_items i JOIN orders o USING (order_id) WHERE i.product_id = p.product_id AND o.status <> 'cancelled')",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q44",
+   "question": "Across order lines that have a discount, what is the average discount as a percentage? Round to 2 decimals.",
+   "tags": [
+    "aggregation"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT round(avg(discount) * 100, 2) FROM order_items WHERE discount > 0",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q45",
+   "question": "What percentage of 2025 revenue came from enterprise customers? Round to 1 decimal.",
+   "tags": [
+    "business_rule",
+    "join"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT round(100 * sum(i.quantity * i.unit_price * (1 - i.discount)) FILTER (WHERE c.segment = 'enterprise')\n             / sum(i.quantity * i.unit_price * (1 - i.discount)), 1)\nFROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q46",
+   "question": "What were total refunds by return reason for returns made in 2025? Return reason and total refund, largest first.",
+   "tags": [
+    "aggregation",
+    "date"
+   ],
+   "ordered": true,
+   "gold_sql": "SELECT reason, sum(refund_amount) AS t FROM returns WHERE year(returned_at) = 2025 GROUP BY reason ORDER BY t DESC",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q47",
+   "question": "Which customer city had the highest revenue from Outdoors products in 2025? Return city and revenue.",
+   "tags": [
+    "join",
+    "ranking",
+    "business_rule"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT c.city, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue\nFROM orders o JOIN order_items i USING (order_id) JOIN products p USING (product_id) JOIN customers c USING (customer_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 AND p.category = 'Outdoors'\nGROUP BY c.city ORDER BY revenue DESC LIMIT 1",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q48",
+   "question": "For each year, what percentage of valid orders came through the app channel? Return year and percentage rounded to 1 decimal, in year order.",
+   "tags": [
+    "date",
+    "aggregation",
+    "business_rule"
+   ],
+   "ordered": true,
+   "gold_sql": "SELECT year(order_date) AS y, round(100.0 * count(*) FILTER (WHERE channel = 'app') / count(*), 1)\nFROM orders WHERE status <> 'cancelled' GROUP BY y ORDER BY y",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q49",
+   "question": "Of the customers who placed a valid order in 2024, how many also placed a valid order in 2025?",
+   "tags": [
+    "business_rule",
+    "date"
+   ],
+   "ordered": false,
+   "gold_sql": "SELECT count(*) FROM (\n  SELECT customer_id FROM orders WHERE status <> 'cancelled' AND year(order_date) = 2024\n  INTERSECT\n  SELECT customer_id FROM orders WHERE status <> 'cancelled' AND year(order_date) = 2025)",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  },
+  {
+   "id": "q50",
+   "question": "Among customers with at least one valid order, what is the average lifetime revenue per customer in each region? Return region and average rounded to 2 decimals, highest first.",
+   "tags": [
+    "business_rule",
+    "join",
+    "aggregation"
+   ],
+   "ordered": true,
+   "gold_sql": "WITH c AS (\n  SELECT c.customer_id, c.region, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue\n  FROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)\n  WHERE o.status <> 'cancelled' GROUP BY c.customer_id, c.region)\nSELECT region, round(avg(revenue), 2) AS a FROM c GROUP BY region ORDER BY a DESC",
+   "solved_by": 0,
+   "attempted_by": 0,
+   "results": {}
+  }
+ ],
+ "ablation": [],
+ "tags": [
+  "aggregation",
+  "anti_join",
+  "basic",
+  "business_rule",
+  "date",
+  "join",
+  "nulls",
+  "ranking",
+  "window"
+ ]
+}
