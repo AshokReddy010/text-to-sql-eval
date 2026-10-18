@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SQL Bench: Text-to-SQL Leaderboard</title>
+<meta name="description" content="How well do language models answer business questions in SQL? 50 questions over a retail warehouse, scored by whether the query returns the right answer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #fbfbfd; --panel: #ffffff; --ink: #1a1530; --muted: #66617a; --line: #e2e0ea; --soft: #f2f1f7;
+  --ok: #2f7d4f; --ok-soft: #e1f1e7; --bad: #c2412d; --bad-soft: #fae5e1; --mid: #b7801f; --mid-soft: #f8eed9;
+  --accent: #4338ca; --accent-soft: #e7e6fb; --none: #ebeaf1;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #110f1c; --panel: #181527; --ink: #ebe9f5; --muted: #a29db7; --line: #2b2740; --soft: #1f1b31;
+    --ok: #58c486; --ok-soft: #173426; --bad: #f07a66; --bad-soft: #3b1d19; --mid: #e3b456; --mid-soft: #362a12;
+    --accent: #a5a1ff; --accent-soft: #29265a; --none: #262238; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #110f1c; --panel: #181527; --ink: #ebe9f5; --muted: #a29db7; --line: #2b2740; --soft: #1f1b31;
+  --ok: #58c486; --ok-soft: #173426; --bad: #f07a66; --bad-soft: #3b1d19; --mid: #e3b456; --mid-soft: #362a12;
+  --accent: #a5a1ff; --accent-soft: #29265a; --none: #262238; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; padding: 0 16px 64px; }
+.wrap { max-width: 1120px; margin: 0 auto; }
+a { color: var(--accent); text-underline-offset: 3px; }
+button { font: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, pre { font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; }
+.num { font-variant-numeric: tabular-nums; }
+
+header { padding-block: 44px 26px; display: grid; gap: 14px; max-width: 760px; }
+h1 { margin: 0; font-size: clamp(1.8rem, 4.4vw, 2.75rem); line-height: 1.08; letter-spacing: -0.025em; font-weight: 700; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); font-size: 1.02rem; max-width: 68ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 26px; color: var(--muted); font-size: 13.5px; }
+.facts b { color: var(--ink); font-weight: 600; }
+
+section { margin-top: 40px; }
+h2 { font-size: 1.25rem; margin: 0 0 4px; letter-spacing: -0.01em; }
+.sec-sub { margin: 0 0 16px; color: var(--muted); font-size: 14px; max-width: 75ch; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+.scroll { overflow-x: auto; }
+
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: 12.5px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+.lb { min-width: 760px; }
+.rank { color: var(--muted); width: 36px; }
+.model b { font-weight: 600; }
+.model small { display: block; color: var(--muted); font-size: 12.5px; }
+.variant { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--soft); color: var(--muted); white-space: nowrap; }
+.variant.context { background: var(--accent-soft); color: var(--accent); }
+.acc { width: 34%; min-width: 220px; }
+.bar { position: relative; height: 22px; background: var(--soft); border-radius: 4px; }
+.bar .fill { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 4px; opacity: .85; }
+.bar .ci { position: absolute; top: 50%; height: 2px; background: var(--ink); opacity: .55; transform: translateY(-50%); }
+.bar .ci::before, .bar .ci::after { content: ""; position: absolute; top: -5px; width: 2px; height: 12px; background: var(--ink); }
+.bar .ci::before { left: 0; } .bar .ci::after { right: 0; }
+.acc-row { display: flex; align-items: center; gap: 10px; }
+.acc-row .bar { flex: 1; }
+.acc-row b { width: 46px; text-align: right; font-weight: 700; }
+.partial { color: var(--mid); font-size: 12.5px; white-space: nowrap; }
+
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 860px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.abl { padding: 16px 18px; display: grid; gap: 14px; }
+.abl-row { display: grid; gap: 6px; }
+.abl-row .name { font-weight: 600; font-size: 14px; }
+.abl-bars { display: grid; grid-template-columns: 74px minmax(0, 1fr) 48px; gap: 4px 10px; align-items: center; font-size: 13px; color: var(--muted); }
+.abl-bars .bar { height: 14px; }
+.abl-bars .bar .fill.schema { background: var(--muted); opacity: .55; }
+.delta { font-weight: 700; color: var(--ok); }
+.delta.neg { color: var(--bad); }
+
+.heat { min-width: 560px; }
+.heat td.cell { text-align: center; font-weight: 600; font-size: 13px; }
+.fails { padding: 16px 18px; display: grid; gap: 12px; }
+.stack { display: flex; height: 16px; border-radius: 4px; overflow: hidden; background: var(--soft); }
+.stack span { display: block; height: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+
+.grid-wrap { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .grid-wrap { grid-template-columns: minmax(0, 1fr); } }
+.agrid { min-width: 420px; font-size: 13.5px; }
+.agrid td, .agrid th { padding: 7px 10px; }
+.agrid tbody tr { cursor: pointer; }
+.agrid tbody tr:hover, .agrid tbody tr[aria-selected="true"] { background: var(--accent-soft); }
+.agrid .q { max-width: 340px; }
+.agrid .q span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dot { display: inline-block; width: 14px; height: 14px; border-radius: 3px; background: var(--none); vertical-align: middle; }
+.dot.ok { background: var(--ok); } .dot.bad { background: var(--bad); } .dot.mid { background: var(--mid); }
+.colhead { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; font-size: 11.5px; max-height: 150px; overflow: hidden; text-overflow: ellipsis; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.chip { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 4px 12px; font-size: 13px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.detail { padding: 18px 20px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow: auto; }
+.detail h3 { margin: 0 0 6px; font-size: 1.05rem; line-height: 1.35; }
+.detail .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.detail .tag { font-size: 12px; background: var(--soft); color: var(--muted); padding: 2px 8px; border-radius: 999px; }
+.detail h4 { margin: 16px 0 6px; font-size: 13.5px; display: flex; align-items: center; gap: 8px; }
+pre.sql { margin: 0; background: var(--soft); border-radius: 6px; padding: 10px 12px; font-size: 12.5px; line-height: 1.5; overflow-x: auto; white-space: pre; }
+.verdict { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+.empty { padding: 24px; color: var(--muted); }
+footer { margin-top: 48px; color: var(--muted); font-size: 13.5px; display: grid; gap: 6px; max-width: 80ch; }
+footer p { margin: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Can a language model answer your business questions in SQL?</h1>
+    <p class="lede">Fifty questions an analyst actually gets (revenue by region, repeat-customer rate, month-over-month growth, return rate) asked of a six-table retail warehouse. A query counts only if it returns the right answer, which is stricter than looking plausible.</p>
+    <div class="facts" id="facts"></div>
+  </header>
+
+  <main>
+    <section aria-labelledby="lb-h">
+      <h2 id="lb-h">Leaderboard</h2>
+      <p class="sec-sub">Execution accuracy with a 95% confidence interval (the whiskers). With 50 questions, models whose whiskers overlap are not reliably different. "Context" prompts include sample rows and the team's business glossary; "schema" prompts only the table definitions.</p>
+      <div class="card scroll"><table class="lb">
+        <thead><tr><th>#</th><th>Model</th><th>Prompt</th><th>Correct answers</th><th>Right but extra columns</th><th>Median latency</th><th>Prompt tokens</th></tr></thead>
+        <tbody id="board"><tr><td colspan="7" class="empty">Loading results…</td></tr></tbody>
+      </table></div>
+    </section>
+
+    <section aria-labelledby="ab-h">
+      <div class="two">
+        <div>
+          <h2 id="ab-h">Does business context help?</h2>
+          <p class="sec-sub">The same model with and without the glossary and sample rows. Questions that depend on a definition ("valid order", "active customer") are where context should matter.</p>
+          <div class="card abl" id="ablation"><div class="empty">No paired runs yet.</div></div>
+        </div>
+        <div>
+          <h2 id="fail-h">How the wrong answers go wrong</h2>
+          <p class="sec-sub">Every miss is classified automatically by running the query.</p>
+          <div class="card fails" id="fails"><div class="empty">No results yet.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="tag-h">
+      <h2 id="tag-h">Accuracy by kind of question</h2>
+      <p class="sec-sub">A question can carry several tags. "Business rule" questions need a definition from the glossary.</p>
+      <div class="card scroll"><table class="heat"><thead id="heat-head"></thead><tbody id="heat"></tbody></table></div>
+    </section>
+
+    <section aria-labelledby="grid-h">
+      <h2 id="grid-h">Every question, every answer</h2>
+      <p class="sec-sub">Pick a question to compare the gold query with what each model wrote.</p>
+      <div class="filters" id="filters" role="group" aria-label="Filter questions"></div>
+      <div class="grid-wrap">
+        <div class="card scroll"><table class="agrid"><thead id="grid-head"></thead><tbody id="grid"></tbody></table></div>
+        <aside class="card detail" id="detail" aria-live="polite"><div class="empty">Select a question.</div></aside>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>The warehouse is synthetic and generated from a fixed seed, so the benchmark is reproducible: customers, products, orders with cancellations, line items with discounts, split-tender payments and partial refunds. Models run through GitHub Models at temperature 0; results refresh daily. Queries are checked for safety and run read-only with file access disabled.</p>
+    <p id="gen"></p>
+    <p><a href="https://github.com/AshokReddy010/text-to-sql-eval">Benchmark, scorer and raw results on GitHub</a></p>
+  </footer>
+</div>
+
+<script>
+const LIVE = "https://raw.githubusercontent.com/AshokReddy010/text-to-sql-eval/main/results/report.json";
+const SRC = new URLSearchParams(location.search).get("src") || LIVE;
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const pct = (x) => x == null ? "–" : `${Math.round(x * 100)}%`;
+const FAIL = {
+  wrong_values: ["Wrong values", "#c2412d"], wrong_shape: ["Wrong number of rows or columns", "#e07b39"],
+  wrong_order: ["Right rows, wrong order", "#b7801f"], extra_columns: ["Extra columns", "#d8b45a"],
+  empty_result: ["No rows", "#8d6fd1"], unknown_identifier: ["Made-up table or column", "#6b5ab8"],
+  syntax: ["Invalid SQL", "#4a4370"], runtime: ["Runtime error", "#7f7a96"], timeout: ["Too slow", "#a9a4bb"],
+  unsafe: ["Refused as unsafe", "#1a1530"], no_sql: ["No SQL", "#cfcbe0"], too_many_rows: ["Too many rows", "#b9b5c9"],
+};
+const TAGS = { basic: "Basic", aggregation: "Aggregation", join: "Joins", anti_join: "Missing rows", window: "Window functions",
+  date: "Dates", business_rule: "Business rule", nulls: "NULLs", ranking: "Top-N and ranking" };
+let R = null, filter = "all", selected = null;
+
+function short(c) { return c.model.split("/").pop(); }
+
+function board() {
+  $("#board").innerHTML = R.configs.map((c, i) => {
+    const [lo, hi] = c.ci95;
+    return `<tr>
+      <td class="rank num">${i + 1}</td>
+      <td class="model"><b>${esc(short(c))}</b><small>${esc(c.provider.split("/").slice(0, -1).join(" / ") || c.provider)}</small></td>
+      <td><span class="variant ${esc(c.variant)}">${esc(c.variant)}</span></td>
+      <td class="acc"><div class="acc-row"><div class="bar" role="img" aria-label="${pct(c.accuracy)}, 95% interval ${pct(lo)} to ${pct(hi)}">
+        <div class="fill" style="width:${c.accuracy * 100}%"></div><div class="ci" style="left:${lo * 100}%;width:${(hi - lo) * 100}%"></div></div>
+        <b class="num">${pct(c.accuracy)}</b></div>
+        ${c.complete ? "" : `<span class="partial">${c.answered} of ${c.total} answered so far</span>`}</td>
+      <td class="num">${pct(c.lenient_accuracy)}</td>
+      <td class="num">${c.median_latency_s == null ? "–" : c.median_latency_s.toFixed(1) + " s"}</td>
+      <td class="num">${c.median_tokens_in == null ? "–" : c.median_tokens_in.toLocaleString()}</td></tr>`;
+  }).join("") || `<tr><td colspan="7" class="empty">No model results yet. The first evaluation runs daily.</td></tr>`;
+}
+
+function ablation() {
+  if (!R.ablation.length) return;
+  $("#ablation").innerHTML = R.ablation.map((a) => `<div class="abl-row"><span class="name">${esc(a.provider.split("/").pop())}</span>
+    <div class="abl-bars"><span>schema</span><div class="bar"><div class="fill schema" style="width:${a.schema * 100}%"></div></div><span class="num">${pct(a.schema)}</span>
+    <span>context</span><div class="bar"><div class="fill" style="width:${a.context * 100}%"></div></div><span class="num">${pct(a.context)}</span></div>
+    <span class="delta ${a.delta < 0 ? "neg" : ""} num">${a.delta >= 0 ? "+" : "−"}${Math.abs(Math.round(a.delta * 100))} points with context</span></div>`).join("");
+}
+
+function fails() {
+  const cs = R.configs.filter((c) => Object.keys(c.failures).length);
+  if (!cs.length) { $("#fails").innerHTML = `<div class="empty">No wrong answers recorded.</div>`; return; }
+  const used = new Set();
+  const rows = cs.map((c) => {
+    const total = Object.values(c.failures).reduce((a, b) => a + b, 0);
+    const segs = Object.entries(c.failures).map(([k, v]) => { used.add(k); return `<span title="${esc(FAIL[k]?.[0] || k)}: ${v}" style="width:${v / total * 100}%;background:${FAIL[k]?.[1] || "#999"}"></span>`; }).join("");
+    return `<div><div style="display:flex;justify-content:space-between;font-size:13.5px"><b style="font-weight:600">${esc(short(c))} <span class="variant ${esc(c.variant)}">${esc(c.variant)}</span></b><span class="num" style="color:var(--muted)">${total} wrong</span></div><div class="stack" role="img" aria-label="${Object.entries(c.failures).map(([k, v]) => `${FAIL[k]?.[0] || k} ${v}`).join(", ")}">${segs}</div></div>`;
+  }).join("");
+  const legend = [...used].map((k) => `<span><i style="background:${FAIL[k]?.[1]}"></i>${esc(FAIL[k]?.[0] || k)}</span>`).join("");
+  $("#fails").innerHTML = rows + `<div class="legend">${legend}</div>`;
+}
+
+function heat() {
+  const cs = R.configs;
+  if (!cs.length) return;
+  $("#heat-head").innerHTML = `<tr><th>Kind</th>${cs.map((c) => `<th title="${esc(c.config)}">${esc(short(c))}<br><span class="variant ${esc(c.variant)}">${esc(c.variant)}</span></th>`).join("")}</tr>`;
+  $("#heat").innerHTML = R.tags.map((t) => `<tr><td>${esc(TAGS[t] || t)}</td>${cs.map((c) => {
+    const v = c.by_tag[t];
+    if (!v) return `<td class="cell">–</td>`;
+    const a = v.accuracy;
+    const bg = `color-mix(in oklab, var(--ok) ${Math.round(a * 70)}%, var(--bad-soft))`;
+    return `<td class="cell num" style="background:${bg};color:${a > 0.55 ? "var(--panel)" : "var(--ink)"}" title="${v.correct} of ${v.n}">${pct(a)}</td>`;
+  }).join("")}</tr>`).join("");
+}
+
+function filters() {
+  const opts = [["all", "All"], ["hard", "Hardest"], ...R.tags.map((t) => [t, TAGS[t] || t])];
+  $("#filters").innerHTML = opts.map(([k, l]) => `<button class="chip" data-f="${k}" aria-pressed="${k === filter}">${esc(l)}</button>`).join("");
+  $("#filters").querySelectorAll("button").forEach((b) => b.onclick = () => { filter = b.dataset.f; filters(); grid(); });
+}
+
+function grid() {
+  const cs = R.configs;
+  $("#grid-head").innerHTML = `<tr><th>#</th><th>Question</th>${cs.map((c) => `<th><span class="colhead" title="${esc(c.config)}">${esc(short(c))} · ${esc(c.variant)}</span></th>`).join("")}</tr>`;
+  let qs = R.questions;
+  if (filter === "hard") qs = qs.filter((q) => q.attempted_by && q.solved_by / q.attempted_by <= 0.34);
+  else if (filter !== "all") qs = qs.filter((q) => q.tags.includes(filter));
+  $("#grid").innerHTML = qs.map((q) => `<tr data-id="${q.id}" tabindex="0" aria-selected="${q.id === selected}">
+    <td class="num" style="color:var(--muted)">${q.id.slice(1)}</td><td class="q"><span title="${esc(q.question)}">${esc(q.question)}</span></td>
+    ${cs.map((c) => { const r = q.results[c.config]; const cls = !r ? "" : r.correct ? "ok" : r.category === "extra_columns" ? "mid" : "bad";
+      return `<td><span class="dot ${cls}" aria-label="${!r ? "not run" : r.correct ? "correct" : "wrong"}"></span></td>`; }).join("")}</tr>`).join("")
+    || `<tr><td colspan="${cs.length + 2}" class="empty">No questions match.</td></tr>`;
+  $("#grid").querySelectorAll("tr[data-id]").forEach((tr) => {
+    const pick = () => { selected = tr.dataset.id; $("#grid").querySelectorAll("tr").forEach((x) => x.setAttribute("aria-selected", String(x === tr))); detail(); };
+    tr.onclick = pick; tr.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } };
+  });
+}
+
+function detail() {
+  const q = R.questions.find((x) => x.id === selected);
+  if (!q) return;
+  const parts = R.configs.map((c) => {
+    const r = q.results[c.config];
+    if (!r) return "";
+    const cls = r.correct ? "ok" : r.category === "extra_columns" ? "mid" : "bad";
+    return `<h4><span class="dot ${cls}"></span>${esc(short(c))} <span class="variant ${esc(c.variant)}">${esc(c.variant)}</span></h4>
+      <pre class="sql">${esc(r.sql || "(no SQL)")}</pre>
+      <div class="verdict">${r.correct ? "Correct" : esc(FAIL[r.category]?.[0] || r.category)}${r.detail ? ": " + esc(r.detail) : ""}</div>`;
+  }).join("");
+  $("#detail").innerHTML = `<h3>${esc(q.question)}</h3>
+    <div class="tags">${q.tags.map((t) => `<span class="tag">${esc(TAGS[t] || t)}</span>`).join("")}${q.ordered ? `<span class="tag">row order matters</span>` : ""}
+    <span class="tag">${q.solved_by} of ${q.attempted_by} solved</span></div>
+    <h4>Gold query</h4><pre class="sql">${esc(q.gold_sql)}</pre>${parts}`;
+}
+
+async function load() {
+  try {
+    const r = await fetch(SRC + (SRC.includes("?") ? "&" : "?") + "t=" + Math.floor(Date.now() / 600000), { cache: "no-store" });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    R = await r.json();
+  } catch (e) {
+    $("#board").innerHTML = `<tr><td colspan="7" class="empty">Results are not published yet (${esc(e.message)}). The evaluation runs daily.</td></tr>`;
+    return;
+  }
+  const done = R.configs.filter((c) => c.complete).length;
+  $("#facts").innerHTML = [`<span><b>${R.questions_total}</b> questions</span>`, `<span><b>6</b> tables</span>`,
+    `<span><b>${R.configs.length}</b> model and prompt pairs</span>`, `<span><b>${done}</b> complete</span>`].join("");
+  $("#gen").textContent = `Report generated ${new Date(R.generated_at).toISOString().slice(0, 16).replace("T", " ")} UTC.`;
+  board(); ablation(); fails(); heat(); filters(); grid();
+  selected = (R.questions.find((q) => q.attempted_by && q.solved_by < q.attempted_by) || R.questions[0]).id;
+  grid(); detail();
+}
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,385 @@
+# The benchmark: 50 business questions over the retail warehouse, each with a hand-written gold query.
+# tags: basic | aggregation | join | anti_join | window | date | business_rule | nulls | ranking
+# ordered: true when the question asks for a specific row order (then order is part of correctness).
+version: 1
+questions:
+  - id: q01
+    tags: [basic, date]
+    question: How many customers signed up in 2025?
+    sql: SELECT count(*) FROM customers WHERE signup_date >= DATE '2025-01-01' AND signup_date < DATE '2026-01-01'
+
+  - id: q02
+    tags: [basic]
+    question: How many products are discontinued?
+    sql: SELECT count(*) FROM products WHERE discontinued
+
+  - id: q03
+    tags: [basic]
+    question: How many orders were cancelled?
+    sql: SELECT count(*) FROM orders WHERE status = 'cancelled'
+
+  - id: q04
+    tags: [basic]
+    ordered: true
+    question: List the SKU and name of every discontinued product in the Electronics category, sorted by SKU.
+    sql: SELECT sku, name FROM products WHERE discontinued AND category = 'Electronics' ORDER BY sku
+
+  - id: q05
+    tags: [aggregation]
+    question: How many orders (including cancelled ones) were placed through each channel? Return the channel and the count.
+    sql: SELECT channel, count(*) FROM orders GROUP BY channel
+
+  - id: q06
+    tags: [aggregation]
+    question: What is the average list price of products in each category, rounded to 2 decimals? Return category and average.
+    sql: SELECT category, round(avg(list_price), 2) FROM products GROUP BY category
+
+  - id: q07
+    tags: [business_rule, join, date]
+    question: What was total revenue in 2025?
+    sql: |
+      SELECT sum(i.quantity * i.unit_price * (1 - i.discount))
+      FROM order_items i JOIN orders o USING (order_id)
+      WHERE o.status <> 'cancelled' AND o.order_date >= DATE '2025-01-01' AND o.order_date < DATE '2026-01-01'
+
+  - id: q08
+    tags: [business_rule, join]
+    question: What is the average order value across all valid orders, rounded to 2 decimals?
+    sql: |
+      SELECT round(sum(i.quantity * i.unit_price * (1 - i.discount)) / count(DISTINCT o.order_id), 2)
+      FROM orders o JOIN order_items i USING (order_id) WHERE o.status <> 'cancelled'
+
+  - id: q09
+    tags: [business_rule, join, ranking]
+    question: Which customer region generated the most revenue in 2025? Return the region and its revenue.
+    sql: |
+      SELECT c.region, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue
+      FROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)
+      WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025
+      GROUP BY c.region ORDER BY revenue DESC LIMIT 1
+
+  - id: q10
+    tags: [business_rule, join]
+    ordered: true
+    question: Show revenue by product category for 2026 so far, highest first. Return category and revenue.
+    sql: |
+      SELECT p.category, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue
+      FROM orders o JOIN order_items i USING (order_id) JOIN products p USING (product_id)
+      WHERE o.status <> 'cancelled' AND year(o.order_date) = 2026
+      GROUP BY p.category ORDER BY revenue DESC
+
+  - id: q11
+    tags: [anti_join]
+    question: How many customers have never placed any order at all, counting cancelled orders as orders?
+    sql: SELECT count(*) FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id)
+
+  - id: q12
+    tags: [anti_join, business_rule]
+    question: How many customers have no valid orders?
+    sql: |
+      SELECT count(*) FROM customers c
+      WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id AND o.status <> 'cancelled')
+
+  - id: q13
+    tags: [ranking, join, business_rule]
+    ordered: true
+    question: What were the top 5 products by units sold in valid orders during 2025? Return product name and units, most units first.
+    sql: |
+      SELECT p.name, sum(i.quantity) AS units
+      FROM orders o JOIN order_items i USING (order_id) JOIN products p USING (product_id)
+      WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025
+      GROUP BY p.product_id, p.name ORDER BY units DESC LIMIT 5
+
+  - id: q14
+    tags: [date, business_rule]
+    ordered: true
+    question: Show revenue for each month of 2025 in calendar order. Return the month number (1-12) and revenue.
+    sql: |
+      SELECT month(o.order_date) AS m, sum(i.quantity * i.unit_price * (1 - i.discount))
+      FROM orders o JOIN order_items i USING (order_id)
+      WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025
+      GROUP BY m ORDER BY m
+
+  - id: q15
+    tags: [window, date, business_rule]
+    ordered: true
+    question: For each month of 2025, show the month number, that month's revenue and the running total of revenue from January, in calendar order.
+    sql: |
+      WITH m AS (
+        SELECT month(o.order_date) AS m, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue
+        FROM orders o JOIN order_items i USING (order_id)
+        WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 GROUP BY m)
+      SELECT m, revenue, sum(revenue) OVER (ORDER BY m) FROM m ORDER BY m
+
+  - id: q16
+    tags: [window, date, business_rule]
+    ordered: true
+    question: For each month from January to June 2026, what was the percentage change in revenue versus the previous month (January compares with December 2025)? Return the month number and the change rounded to 1 decimal, in calendar order.
+    sql: |
+      WITH m AS (
+        SELECT date_trunc('month', o.order_date) AS mo, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue
+        FROM orders o JOIN order_items i USING (order_id)
+        WHERE o.status <> 'cancelled' AND o.order_date >= DATE '2025-12-01' GROUP BY mo),
+      g AS (SELECT mo, round((revenue / lag(revenue) OVER (ORDER BY mo) - 1) * 100, 1) AS pct FROM m)
+      SELECT month(mo), pct FROM g WHERE year(mo) = 2026 ORDER BY mo
+
+  - id: q17
+    tags: [business_rule, date]
+    question: How many active customers are there?
+    sql: SELECT count(DISTINCT customer_id) FROM orders WHERE status <> 'cancelled' AND order_date >= DATE '2026-04-01'
+
+  - id: q18
+    tags: [business_rule, aggregation]
+    question: Among customers with at least one valid order, what percentage are repeat customers? Round to 1 decimal.
+    sql: |
+      WITH c AS (SELECT customer_id, count(*) AS n FROM orders WHERE status <> 'cancelled' GROUP BY customer_id)
+      SELECT round(100.0 * count(*) FILTER (WHERE n >= 2) / count(*), 1) FROM c
+
+  - id: q19
+    tags: [business_rule, join]
+    question: What is the overall return rate? Round to 2 decimals.
+    sql: |
+      SELECT round(100.0 * count(DISTINCT r.order_id) / count(DISTINCT o.order_id), 2)
+      FROM orders o LEFT JOIN returns r USING (order_id)
+      WHERE o.status IN ('delivered', 'returned')
+
+  - id: q20
+    tags: [join, ranking]
+    ordered: true
+    question: For each product category, what is the most common return reason? Return category, reason and the number of returns with that reason, sorted by category.
+    sql: |
+      WITH c AS (
+        SELECT p.category, r.reason, count(*) AS n,
+               row_number() OVER (PARTITION BY p.category ORDER BY count(*) DESC) AS rk
+        FROM returns r JOIN products p USING (product_id) GROUP BY p.category, r.reason)
+      SELECT category, reason, n FROM c WHERE rk = 1 ORDER BY category
+
+  - id: q21
+    tags: [business_rule, join]
+    question: What was the gross margin percentage of each product category in 2025? Return category and margin rounded to 1 decimal.
+    sql: |
+      SELECT p.category,
+             round(100 * (sum(i.quantity * i.unit_price * (1 - i.discount)) - sum(i.quantity * p.unit_cost))
+                   / sum(i.quantity * i.unit_price * (1 - i.discount)), 1)
+      FROM orders o JOIN order_items i USING (order_id) JOIN products p USING (product_id)
+      WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 GROUP BY p.category
+
+  - id: q22
+    tags: [business_rule, join]
+    question: What was net revenue after refunds for orders placed in 2025? Round to 2 decimals.
+    sql: |
+      WITH o AS (SELECT order_id FROM orders WHERE status <> 'cancelled' AND year(order_date) = 2025)
+      SELECT round((SELECT sum(quantity * unit_price * (1 - discount)) FROM order_items WHERE order_id IN (SELECT order_id FROM o))
+                 - (SELECT coalesce(sum(refund_amount), 0) FROM returns WHERE order_id IN (SELECT order_id FROM o)), 2)
+
+  - id: q23
+    tags: [aggregation]
+    question: How many orders were paid using more than one payment method?
+    sql: SELECT count(*) FROM (SELECT order_id FROM payments GROUP BY order_id HAVING count(DISTINCT method) > 1)
+
+  - id: q24
+    tags: [aggregation, date]
+    question: What share of the total amount paid in 2025 came from each payment method? Use the payment timestamp's year. Return method and percentage rounded to 1 decimal.
+    sql: |
+      SELECT method, round(100 * sum(amount) / sum(sum(amount)) OVER (), 1)
+      FROM payments WHERE year(paid_at) = 2025 GROUP BY method
+
+  - id: q25
+    tags: [date, aggregation, nulls]
+    question: What is the average number of days to ship for each channel? Round to 2 decimals. Return channel and average days.
+    sql: |
+      SELECT channel, round(avg(ship_date - order_date), 2) FROM orders WHERE ship_date IS NOT NULL GROUP BY channel
+
+  - id: q26
+    tags: [date, ranking, business_rule]
+    question: On which day of the week were the most valid orders placed? Return the day's English name, such as Monday.
+    sql: SELECT dayname(order_date) FROM orders WHERE status <> 'cancelled' GROUP BY 1 ORDER BY count(*) DESC LIMIT 1
+
+  - id: q27
+    tags: [business_rule, nulls, join]
+    question: How much 2025 revenue came from orders that used a promo code? Round to 2 decimals.
+    sql: |
+      SELECT round(sum(i.quantity * i.unit_price * (1 - i.discount)), 2)
+      FROM orders o JOIN order_items i USING (order_id)
+      WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 AND o.promo_code IS NOT NULL
+
+  - id: q28
+    tags: [ranking, nulls]
+    question: Which promo code was used on the most valid orders, and on how many?
+    sql: |
+      SELECT promo_code, count(*) FROM orders WHERE status <> 'cancelled' AND promo_code IS NOT NULL
+      GROUP BY promo_code ORDER BY count(*) DESC LIMIT 1
+
+  - id: q29
+    tags: [basic, nulls]
+    question: How many customers were referred by another customer?
+    sql: SELECT count(*) FROM customers WHERE referred_by IS NOT NULL
+
+  - id: q30
+    tags: [join, ranking]
+    ordered: true
+    question: Who are the 3 customers who referred the most other customers? Return the referrer's customer_id, name and the number of customers they referred, most first; break ties by lower customer_id.
+    sql: |
+      SELECT r.customer_id, r.name, count(*) AS n
+      FROM customers c JOIN customers r ON c.referred_by = r.customer_id
+      GROUP BY r.customer_id, r.name ORDER BY n DESC, r.customer_id LIMIT 3
+
+  - id: q31
+    tags: [business_rule, join, nulls]
+    question: What was the 2025 revenue from referred customers? Round to 2 decimals.
+    sql: |
+      SELECT round(sum(i.quantity * i.unit_price * (1 - i.discount)), 2)
+      FROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)
+      WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 AND c.referred_by IS NOT NULL
+
+  - id: q32
+    tags: [business_rule, join]
+    question: What was the average order value in 2025 for each customer segment? Return segment and AOV rounded to 2 decimals.
+    sql: |
+      SELECT c.segment, round(sum(i.quantity * i.unit_price * (1 - i.discount)) / count(DISTINCT o.order_id), 2)
+      FROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)
+      WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 GROUP BY c.segment
+
+  - id: q33
+    tags: [date, business_rule, join]
+    question: Of the customers who signed up in 2025, how many placed their first valid order in the same calendar month they signed up?
+    sql: |
+      WITH f AS (SELECT customer_id, min(order_date) AS first_order FROM orders WHERE status <> 'cancelled' GROUP BY customer_id)
+      SELECT count(*) FROM customers c JOIN f USING (customer_id)
+      WHERE year(c.signup_date) = 2025 AND date_trunc('month', f.first_order) = date_trunc('month', c.signup_date)
+
+  - id: q34
+    tags: [date, business_rule, join]
+    question: On average, how many days pass between a customer's signup and their first valid order, for customers who have placed one? Round to 1 decimal.
+    sql: |
+      WITH f AS (SELECT customer_id, min(order_date) AS first_order FROM orders WHERE status <> 'cancelled' GROUP BY customer_id)
+      SELECT round(avg(f.first_order - c.signup_date), 1) FROM customers c JOIN f USING (customer_id)
+
+  - id: q35
+    tags: [window, ranking, business_rule]
+    ordered: true
+    question: For each product category, which product had the highest revenue in 2025? Return category, product name and revenue, sorted by category.
+    sql: |
+      WITH r AS (
+        SELECT p.category, p.name, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue,
+               row_number() OVER (PARTITION BY p.category ORDER BY sum(i.quantity * i.unit_price * (1 - i.discount)) DESC) AS rk
+        FROM orders o JOIN order_items i USING (order_id) JOIN products p USING (product_id)
+        WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 GROUP BY p.category, p.product_id, p.name)
+      SELECT category, name, revenue FROM r WHERE rk = 1 ORDER BY category
+
+  - id: q36
+    tags: [business_rule, aggregation]
+    question: What was the median order value of valid orders placed in 2025? Round to 2 decimals.
+    sql: |
+      WITH v AS (
+        SELECT o.order_id, sum(i.quantity * i.unit_price * (1 - i.discount)) AS value
+        FROM orders o JOIN order_items i USING (order_id)
+        WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 GROUP BY o.order_id)
+      SELECT round(median(value), 2) FROM v
+
+  - id: q37
+    tags: [aggregation, business_rule]
+    question: How many customers have more than 20 valid orders?
+    sql: SELECT count(*) FROM (SELECT customer_id FROM orders WHERE status <> 'cancelled' GROUP BY customer_id HAVING count(*) > 20)
+
+  - id: q38
+    tags: [ranking, business_rule, join]
+    ordered: true
+    question: Who are the top 10 customers by lifetime revenue? Return customer_id, name and revenue, highest first.
+    sql: |
+      SELECT c.customer_id, c.name, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue
+      FROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)
+      WHERE o.status <> 'cancelled' GROUP BY c.customer_id, c.name ORDER BY revenue DESC LIMIT 10
+
+  - id: q39
+    tags: [date, join, business_rule]
+    question: How many distinct states do the customers who placed a valid order in June 2026 come from?
+    sql: |
+      SELECT count(DISTINCT c.state) FROM orders o JOIN customers c USING (customer_id)
+      WHERE o.status <> 'cancelled' AND o.order_date >= DATE '2026-06-01' AND o.order_date < DATE '2026-07-01'
+
+  - id: q40
+    tags: [date, business_rule]
+    question: How many valid orders were placed on Saturdays or Sundays in 2025?
+    sql: SELECT count(*) FROM orders WHERE status <> 'cancelled' AND year(order_date) = 2025 AND dayofweek(order_date) IN (0, 6)
+
+  - id: q41
+    tags: [date, business_rule]
+    question: By what percentage did revenue from November 20 to December 22 (inclusive) grow in 2025 compared with the same dates in 2024? Round to 1 decimal.
+    sql: |
+      WITH r AS (
+        SELECT year(o.order_date) AS y, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue
+        FROM orders o JOIN order_items i USING (order_id)
+        WHERE o.status <> 'cancelled'
+          AND ((o.order_date BETWEEN DATE '2025-11-20' AND DATE '2025-12-22') OR (o.order_date BETWEEN DATE '2024-11-20' AND DATE '2024-12-22'))
+        GROUP BY y)
+      SELECT round(((SELECT revenue FROM r WHERE y = 2025) / (SELECT revenue FROM r WHERE y = 2024) - 1) * 100, 1)
+
+  - id: q42
+    tags: [nulls]
+    question: How many orders with status shipped, delivered or returned have no ship date?
+    sql: SELECT count(*) FROM orders WHERE status IN ('shipped', 'delivered', 'returned') AND ship_date IS NULL
+
+  - id: q43
+    tags: [anti_join, business_rule]
+    question: How many products have never been sold in a valid order?
+    sql: |
+      SELECT count(*) FROM products p WHERE NOT EXISTS (
+        SELECT 1 FROM order_items i JOIN orders o USING (order_id) WHERE i.product_id = p.product_id AND o.status <> 'cancelled')
+
+  - id: q44
+    tags: [aggregation]
+    question: Across order lines that have a discount, what is the average discount as a percentage? Round to 2 decimals.
+    sql: SELECT round(avg(discount) * 100, 2) FROM order_items WHERE discount > 0
+
+  - id: q45
+    tags: [business_rule, join]
+    question: What percentage of 2025 revenue came from enterprise customers? Round to 1 decimal.
+    sql: |
+      SELECT round(100 * sum(i.quantity * i.unit_price * (1 - i.discount)) FILTER (WHERE c.segment = 'enterprise')
+                   / sum(i.quantity * i.unit_price * (1 - i.discount)), 1)
+      FROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)
+      WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025
+
+  - id: q46
+    tags: [aggregation, date]
+    ordered: true
+    question: What were total refunds by return reason for returns made in 2025? Return reason and total refund, largest first.
+    sql: SELECT reason, sum(refund_amount) AS t FROM returns WHERE year(returned_at) = 2025 GROUP BY reason ORDER BY t DESC
+
+  - id: q47
+    tags: [join, ranking, business_rule]
+    question: Which customer city had the highest revenue from Outdoors products in 2025? Return city and revenue.
+    sql: |
+      SELECT c.city, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue
+      FROM orders o JOIN order_items i USING (order_id) JOIN products p USING (product_id) JOIN customers c USING (customer_id)
+      WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 AND p.category = 'Outdoors'
+      GROUP BY c.city ORDER BY revenue DESC LIMIT 1
+
+  - id: q48
+    tags: [date, aggregation, business_rule]
+    ordered: true
+    question: For each year, what percentage of valid orders came through the app channel? Return year and percentage rounded to 1 decimal, in year order.
+    sql: |
+      SELECT year(order_date) AS y, round(100.0 * count(*) FILTER (WHERE channel = 'app') / count(*), 1)
+      FROM orders WHERE status <> 'cancelled' GROUP BY y ORDER BY y
+
+  - id: q49
+    tags: [business_rule, date]
+    question: Of the customers who placed a valid order in 2024, how many also placed a valid order in 2025?
+    sql: |
+      SELECT count(*) FROM (
+        SELECT customer_id FROM orders WHERE status <> 'cancelled' AND year(order_date) = 2024
+        INTERSECT
+        SELECT customer_id FROM orders WHERE status <> 'cancelled' AND year(order_date) = 2025)
+
+  - id: q50
+    tags: [business_rule, join, aggregation]
+    ordered: true
+    question: Among customers with at least one valid order, what is the average lifetime revenue per customer in each region? Return region and average rounded to 2 decimals, highest first.
+    sql: |
+      WITH c AS (
+        SELECT c.customer_id, c.region, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue
+        FROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)
+        WHERE o.status <> 'cancelled' GROUP BY c.customer_id, c.region)
+      SELECT region, round(avg(revenue), 2) AS a FROM c GROUP BY region ORDER BY a DESC

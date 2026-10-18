@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "text-to-sql-eval"
+version = "1.0.0"
+description = "An execution-accuracy benchmark for text-to-SQL: 50 business questions over a realistic DuckDB warehouse, scored by result equivalence."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Ashok Reddy" }]
+requires-python = ">=3.10"
+dependencies = ["duckdb>=1.1", "sqlglot>=25", "PyYAML>=6.0", "pandas>=2.0"]
+keywords = ["text-to-sql", "llm evaluation", "benchmark", "duckdb", "analytics"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Database",
+  "Intended Audience :: Developers",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6", "mypy>=1.10", "pandas-stubs", "types-PyYAML"]
+
+[project.scripts]
+sqleval = "sqleval.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/AshokReddy010/text-to-sql-eval"
+Leaderboard = "https://ashokreddy010.github.io/text-to-sql-eval/"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+ignore = ["E501", "B023"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_unused_ignores = false
