@@ -1,1 +1,0 @@
-{"at": "2026-10-19T01:56:37.694613+00:00", "category": "provider_error", "config": "groq/qwen/qwen3-32b@context", "correct": false, "detail": "HTTP 404: {\"error\":{\"message\":\"The model `qwen/qwen3-32b` does not exist or you do not have access to it.\",\"type\":\"invalid_request_error\",\"code\":\"model_not_found\"}}\n", "hash": "f3bd868fbb68", "id": "q01", "lenient": false}

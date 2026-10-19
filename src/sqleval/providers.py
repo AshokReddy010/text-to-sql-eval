@@ -257,3 +257,56 @@ def auto_models(limit: int = 6) -> list[str]:
         available = set()
     chosen = [m for m in GITHUB_PREFERRED if m in available] if available else list(GITHUB_PREFERRED)
     return [f"github/{m}" for m in chosen][:limit]
+
+
+# Groq retires and adds models often, so the workflow asks Groq which ones it serves today. Preferred families,
+# best first; anything else that is a chat model follows. Speech, safety-classifier and agent models are skipped.
+GROQ_PREFERRED = [
+    "openai/gpt-oss-120b",
+    "moonshotai/kimi-k2",
+    "meta-llama/llama-4-maverick",
+    "qwen/",
+    "deepseek",
+    "llama-3.3-70b",
+    "openai/gpt-oss-20b",
+    "meta-llama/llama-4-scout",
+    "llama-3.1-8b",
+]
+GROQ_SKIP = ("whisper", "guard", "tts", "playai", "orpheus", "compound", "distil", "safeguard", "embed")
+
+
+def groq_catalog() -> list[str]:
+    req = urllib.request.Request(
+        "https://api.groq.com/openai/v1/models",
+        headers={"Authorization": f"Bearer {os.environ.get('GROQ_API_KEY', '')}", "User-Agent": USER_AGENT},
+    )
+    with _OPENER.open(req, timeout=60) as r:
+        data = json.loads(r.read().decode())
+    return [m["id"] for m in data.get("data", []) if isinstance(m, dict) and m.get("active", True) and "id" in m]
+
+
+def rank_groq(ids: list[str], limit: int) -> list[str]:
+    usable = sorted(i for i in ids if not any(s in i.lower() for s in GROQ_SKIP))
+
+    def key(model: str) -> int:
+        return next((n for n, p in enumerate(GROQ_PREFERRED) if model.lower().startswith(p)), len(GROQ_PREFERRED))
+
+    chosen: list[str] = []
+    for model in sorted(usable, key=key):  # stable: alphabetical within a family
+        family = next((p for p in GROQ_PREFERRED if model.lower().startswith(p)), model)
+        if family == "qwen/" and any(c.startswith("qwen/") for c in chosen):
+            continue  # one model per family keeps the board varied
+        if family != model and any(c.lower().startswith(family) for c in chosen):
+            continue
+        chosen.append(model)
+    return [f"groq/{m}" for m in chosen][:limit]
+
+
+def expand(spec: str) -> list[str]:
+    """'auto' -> GitHub Models; 'groq/auto' or 'groq/auto:N' -> the best N chat models Groq serves today."""
+    if spec == "auto":
+        return auto_models()
+    if spec.startswith("groq/auto"):
+        _, _, n = spec.partition(":")
+        return rank_groq(groq_catalog(), int(n) if n else 5)
+    return [spec]

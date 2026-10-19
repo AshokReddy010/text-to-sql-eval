@@ -23,7 +23,8 @@ jobs:
       GITHUB_TOKEN: ${{ github.token }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       # Groq's free tier is used when the repository has a GROQ_API_KEY secret; otherwise GitHub Models.
-      GROQ_MODELS: groq/llama-3.3-70b-versatile groq/openai/gpt-oss-120b groq/qwen/qwen3-32b groq/llama-3.1-8b-instant
+      # groq/auto asks Groq which chat models it serves today, so retired models drop out by themselves.
+      GROQ_MODELS: groq/auto:5
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -46,7 +47,7 @@ jobs:
       - name: Ablation without context (two models)
         run: |
           set -o pipefail
-          if [ -n "$GROQ_API_KEY" ]; then a="--model groq/llama-3.3-70b-versatile --model groq/llama-3.1-8b-instant";
+          if [ -n "$GROQ_API_KEY" ]; then a="--model groq/auto:2";
           else a="--model github/openai/gpt-4.1-mini --model github/openai/gpt-4o-mini"; fi
           sqleval run $a --variant schema --budget-minutes 25 2>&1 | tee abl.log || { echo "::error title=ablation failed::$(tail -c 3000 abl.log | sed ':a;N;$!ba;s/\n/%0A/g')"; exit 1; }
       - name: Report

@@ -3,6 +3,7 @@
 sqleval build                                    create build/warehouse.duckdb
 sqleval run --model github/openai/gpt-4.1-mini --variant context
 sqleval run --model auto --variant context       every preferred GitHub Models model that is available
+sqleval run --model groq/auto:5                   the five best chat models Groq serves today
 sqleval run --model gold                         harness self-check (must score 100%)
 sqleval report                                   results/runs/*.jsonl -> results/report.json
 sqleval ask "How many orders were cancelled?" --model github/openai/gpt-4.1-mini
@@ -19,7 +20,7 @@ from pathlib import Path
 
 from . import __version__
 from .prompts import VARIANTS, build_prompt
-from .providers import auto_models, get_provider
+from .providers import expand, get_provider
 from .report import build_report
 from .runner import load_questions, run_config
 from .scoring import connect, execute, extract_sql
@@ -71,7 +72,8 @@ def main(argv: list[str] | None = None) -> int:
             qs = [q for q in qs if q.id in set(args.only)]
         models: list[str] = []
         for m in args.model:
-            models += auto_models() if m == "auto" else [m]
+            models += expand(m)
+        print(f"::notice title=models::{' '.join(models)}")
         deadline = time.monotonic() + args.budget_minutes * 60 if args.budget_minutes else None
         for m in models:
             for v in args.variant or ["context"]:

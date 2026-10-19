@@ -14,7 +14,7 @@
 | **Warehouse** | A retail business in DuckDB: `customers`, `products`, `orders`, `order_items`, `payments`, `returns` (~32k orders, 63k lines). Generated from a fixed seed, so it is reproducible and free to share. It has the traps real warehouses have: 6% cancelled orders, partial refunds, split-tender payments, customers who never ordered, nullable referral and promo columns, weekend and holiday seasonality. |
 | **Questions** | [50 business questions](benchmark/questions.yaml), each with a hand-written gold query and tags: basic, aggregation, joins, missing rows (anti-joins), window functions, dates, NULLs, top-N, and business rules that need the [glossary](benchmark/glossary.md). Thirteen require a specific row order. |
 | **Prompts** | `schema` (table definitions only) and `context` (plus three sample rows per table and the business glossary), to measure what context is worth. |
-| **Models** | Any OpenAI-compatible endpoint, Anthropic, Groq and GitHub Models. The daily workflow uses Groq's free tier (Llama 3.3 70B, GPT-OSS 120B, Qwen3 32B, Llama 3.1 8B) through a `GROQ_API_KEY` repository secret, and falls back to GitHub Models where that is enabled. Keys only ever come from the environment. |
+| **Models** | Any OpenAI-compatible endpoint, Anthropic, Groq and GitHub Models. The daily workflow uses Groq's free tier through a `GROQ_API_KEY` repository secret. `groq/auto:5` asks Groq which chat models it serves that day and picks the five best families, so retired models drop out on their own. The workflow and falls back to GitHub Models where that is enabled. Keys only ever come from the environment. |
 
 ## How answers are scored
 

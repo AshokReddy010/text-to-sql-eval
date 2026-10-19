@@ -194,3 +194,26 @@ def test_requests_carry_a_user_agent(monkeypatch):
     monkeypatch.setattr(providers._OPENER, "open", open_)
     get_provider("groq/llama-3.3-70b-versatile").complete("s", "u")
     assert seen and seen[0].startswith("sqleval/")
+
+
+def test_groq_auto_ranks_current_chat_models():
+    ids = [
+        "whisper-large-v3",
+        "meta-llama/llama-guard-4-12b",
+        "llama-3.1-8b-instant",
+        "qwen/qwen3-32b",
+        "qwen/qwen3-235b",
+        "openai/gpt-oss-20b",
+        "openai/gpt-oss-120b",
+        "groq/compound",
+        "some-new/model",
+    ]
+    got = providers.rank_groq(ids, 10)
+    assert got[:4] == [
+        "groq/openai/gpt-oss-120b",
+        "groq/qwen/qwen3-235b",
+        "groq/openai/gpt-oss-20b",
+        "groq/llama-3.1-8b-instant",
+    ]
+    assert got[-1] == "groq/some-new/model" and not any("whisper" in g or "guard" in g or "compound" in g for g in got)
+    assert providers.rank_groq(ids, 2) == got[:2]
