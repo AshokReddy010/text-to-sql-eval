@@ -170,3 +170,27 @@ def test_empty_response_falls_back_to_a_configured_endpoint(monkeypatch):
     assert seen == [(providers.GITHUB_URL, "openai/gpt-4.1-mini"), (providers.GITHUB_LEGACY_URL, "gpt-4.1-mini")]
     p.complete("s", "u")
     assert seen[-1][0] == providers.GITHUB_LEGACY_URL  # stays on the endpoint that works
+
+
+def test_requests_carry_a_user_agent(monkeypatch):
+    # Groq sits behind Cloudflare, which rejects urllib's default User-Agent with "error code: 1010"
+    monkeypatch.setenv("GROQ_API_KEY", "k")
+    seen = []
+
+    class R(io.BytesIO):
+        status = 200
+        headers: dict[str, str] = {}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def open_(req, timeout):
+        seen.append(req.get_header("User-agent"))
+        return R(json.dumps({"choices": [{"message": {"content": "SELECT 1"}}]}).encode())
+
+    monkeypatch.setattr(providers._OPENER, "open", open_)
+    get_provider("groq/llama-3.3-70b-versatile").complete("s", "u")
+    assert seen and seen[0].startswith("sqleval/")

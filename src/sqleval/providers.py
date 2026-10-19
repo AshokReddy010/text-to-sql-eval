@@ -64,6 +64,7 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 _OPENER = urllib.request.build_opener(_NoRedirect)
+USER_AGENT = "sqleval/0.1 (+https://github.com/AshokReddy010/text-to-sql-eval)"
 
 
 def _post(url: str, payload: dict[str, Any], headers: dict[str, str], retries: int = 4, timeout: float = 90) -> Any:
@@ -71,7 +72,11 @@ def _post(url: str, payload: dict[str, Any], headers: dict[str, str], retries: i
     last = ""
     for attempt in range(retries):
         req = urllib.request.Request(
-            url, data=body, method="POST", headers={"Content-Type": "application/json", **headers}
+            url,
+            data=body,
+            method="POST",
+            # Cloudflare-fronted APIs (Groq) refuse urllib's default User-Agent with "error code: 1010"
+            headers={"Content-Type": "application/json", "User-Agent": USER_AGENT, **headers},
         )
         try:
             with _OPENER.open(req, timeout=timeout) as r:
