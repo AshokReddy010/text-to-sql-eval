@@ -16,6 +16,16 @@
 | **Prompts** | `schema` (table definitions only) and `context` (plus three sample rows per table and the business glossary), to measure what context is worth. |
 | **Models** | Any OpenAI-compatible endpoint, Anthropic, Groq and GitHub Models. The daily workflow uses Groq's free tier through a `GROQ_API_KEY` repository secret. `groq/auto:5` asks Groq which chat models it serves that day and picks the five best families, so retired models drop out on their own. Without the secret it falls back to GitHub Models where that is enabled. Keys only ever come from the environment. |
 
+## Results so far
+
+| Model (Groq free tier) | With business context | Schema only |
+|---|---|---|
+| GPT-OSS 120B | **96%** (48/50) | 48% (24/50) |
+| Qwen3.8 27B | **94%** (47/50) | 42% (21/50) |
+| GPT-OSS 20B | **92%** (46/50) | not run |
+
+Business context roughly doubles accuracy. For GPT-OSS 120B, 25 of the 26 schema-only misses are business-rule questions, whose answer depends on a definition (a valid order excludes cancellations, revenue is net of refunds) that the table definitions do not state. The three models with context are within each other's 95% intervals, so they are not reliably different. Live numbers: the [leaderboard](https://ashokreddy010.github.io/text-to-sql-eval/).
+
 ## How answers are scored
 
 `sqleval.scoring` runs both queries and compares results, allowing what does not change the answer and nothing else:
