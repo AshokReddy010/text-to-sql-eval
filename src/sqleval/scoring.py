@@ -88,6 +88,9 @@ def check_safe(sql: str) -> str | None:
         statements = [s for s in sqlglot.parse(sql, read="duckdb") if s is not None]
     except sqlglot.errors.ParseError as error:
         return f"syntax: {str(error).splitlines()[0][:200]}"
+    except (RecursionError, sqlglot.errors.SqlglotError, ValueError, TypeError, IndexError) as error:
+        # garbage from small models can drive the parser into deep recursion or tokenizer errors
+        return f"syntax: could not parse ({type(error).__name__})"
     if len(statements) != 1:
         return f"unsafe: expected one statement, got {len(statements)}"
     st = statements[0]

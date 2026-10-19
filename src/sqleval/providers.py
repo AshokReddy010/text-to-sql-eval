@@ -272,7 +272,8 @@ GROQ_PREFERRED = [
     "meta-llama/llama-4-scout",
     "llama-3.1-8b",
 ]
-GROQ_SKIP = ("whisper", "guard", "tts", "playai", "orpheus", "compound", "distil", "safeguard", "embed")
+GROQ_SKIP = ("whisper", "guard", "tts", "playai", "orpheus", "compound", "distil", "safeguard", "embed", "allam")
+# allam-2-7b is an Arabic-first 7B model: it cannot write SQL, so it adds noise rather than a data point
 
 
 def groq_catalog() -> list[str]:

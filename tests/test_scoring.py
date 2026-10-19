@@ -103,3 +103,10 @@ def test_score_end_to_end(con):
     )
     assert v.category == "wrong_shape"
     assert score(con, gold, "no idea", False)[2].category == "no_sql"
+
+
+def test_pathological_sql_is_a_syntax_miss_not_a_crash():
+    from sqleval.scoring import check_safe
+
+    reason = check_safe("SELECT " + "(" * 5000 + "1" + ")" * 5000)
+    assert reason is not None and reason.startswith("syntax")

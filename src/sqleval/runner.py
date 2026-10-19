@@ -117,7 +117,23 @@ def run_config(
             if "rate limited" in str(error) or error.fatal:
                 break  # a quota is exhausted or the model is not available; resume on the next run
             continue
-        sql, execution, verdict = score(con, q.sql, reply.text, q.ordered)
+        try:
+            sql, execution, verdict = score(con, q.sql, reply.text, q.ordered)
+        except Exception as error:  # one unscoreable reply must not end the run; the gold self-check guards the harness
+            log.warning("%s %s: could not score: %r", config, q.id, error)
+            rec.update(
+                {
+                    "reply": reply.text[:4000],
+                    "correct": False,
+                    "lenient": False,
+                    "category": "syntax",
+                    "detail": f"could not score: {type(error).__name__}",
+                }
+            )
+            results[q.id] = rec
+            stats["scored"] += 1
+            save_results(path, results)
+            continue
         rec.update(
             {
                 "reply": reply.text[:4000],
