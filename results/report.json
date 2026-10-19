@@ -1,7 +1,79 @@
 {
- "generated_at": "2026-10-19T01:45:54.038596+00:00",
+ "generated_at": "2026-10-19T01:56:38.919595+00:00",
  "questions_total": 50,
- "configs": [],
+ "configs": [
+  {
+   "config": "groq/openai/gpt-oss-120b@context",
+   "provider": "groq/openai/gpt-oss-120b",
+   "model": "openai/gpt-oss-120b",
+   "variant": "context",
+   "answered": 50,
+   "total": 50,
+   "complete": true,
+   "correct": 48,
+   "accuracy": 0.96,
+   "ci95": [
+    0.8654,
+    0.989
+   ],
+   "lenient_accuracy": 0.96,
+   "by_tag": {
+    "aggregation": {
+     "correct": 11,
+     "n": 12,
+     "accuracy": 0.9167
+    },
+    "anti_join": {
+     "correct": 3,
+     "n": 3,
+     "accuracy": 1.0
+    },
+    "basic": {
+     "correct": 5,
+     "n": 5,
+     "accuracy": 1.0
+    },
+    "business_rule": {
+     "correct": 32,
+     "n": 33,
+     "accuracy": 0.9697
+    },
+    "date": {
+     "correct": 16,
+     "n": 17,
+     "accuracy": 0.9412
+    },
+    "join": {
+     "correct": 19,
+     "n": 20,
+     "accuracy": 0.95
+    },
+    "nulls": {
+     "correct": 6,
+     "n": 6,
+     "accuracy": 1.0
+    },
+    "ranking": {
+     "correct": 9,
+     "n": 9,
+     "accuracy": 1.0
+    },
+    "window": {
+     "correct": 3,
+     "n": 3,
+     "accuracy": 1.0
+    }
+   },
+   "failures": {
+    "wrong_values": 1,
+    "unknown_identifier": 1
+   },
+   "median_latency_s": 8.12,
+   "median_tokens_in": 1724,
+   "median_tokens_out": 343,
+   "last_run": "2026-10-19T01:56:35.771736+00:00"
+  }
+ ],
  "questions": [
   {
    "id": "q01",
@@ -12,9 +84,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT count(*) FROM customers WHERE signup_date >= DATE '2025-01-01' AND signup_date < DATE '2026-01-01'",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT COUNT(*) AS num_customers_2025\nFROM customers\nWHERE EXTRACT(year FROM signup_date) = 2025",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q02",
@@ -24,9 +103,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT count(*) FROM products WHERE discontinued",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT COUNT(*) AS discontinued_product_count\nFROM products\nWHERE discontinued = TRUE",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q03",
@@ -36,9 +122,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT count(*) FROM orders WHERE status = 'cancelled'",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT COUNT(*) AS cancelled_orders\nFROM orders\nWHERE status = 'cancelled'",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q04",
@@ -48,9 +141,16 @@
    ],
    "ordered": true,
    "gold_sql": "SELECT sku, name FROM products WHERE discontinued AND category = 'Electronics' ORDER BY sku",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT\n    sku,\n    name\nFROM\n    products\nWHERE\n    category = 'Electronics'\n    AND discontinued = TRUE\nORDER BY\n    sku",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q05",
@@ -60,9 +160,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT channel, count(*) FROM orders GROUP BY channel",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT\n    channel,\n    COUNT(*) AS order_count\nFROM orders\nGROUP BY channel\nORDER BY channel",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q06",
@@ -72,9 +179,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT category, round(avg(list_price), 2) FROM products GROUP BY category",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT\n    category,\n    ROUND(AVG(list_price), 2) AS average_list_price\nFROM\n    products\nGROUP BY\n    category\nORDER BY\n    category",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q07",
@@ -86,9 +200,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT sum(i.quantity * i.unit_price * (1 - i.discount))\nFROM order_items i JOIN orders o USING (order_id)\nWHERE o.status <> 'cancelled' AND o.order_date >= DATE '2025-01-01' AND o.order_date < DATE '2026-01-01'",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT\n    SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS total_revenue\nFROM\n    orders AS o\nJOIN\n    order_items AS oi USING (order_id)\nWHERE\n    o.status <> 'cancelled'\n    AND o.order_date BETWEEN DATE '2025-01-01' AND DATE '2025-12-31'",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q08",
@@ -99,9 +220,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT round(sum(i.quantity * i.unit_price * (1 - i.discount)) / count(DISTINCT o.order_id), 2)\nFROM orders o JOIN order_items i USING (order_id) WHERE o.status <> 'cancelled'",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT ROUND(SUM(order_rev) / COUNT(*), 2) AS average_order_value\nFROM (\n    SELECT oi.order_id,\n           SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS order_rev\n    FROM orders o\n    JOIN order_items oi USING (order_id)\n    WHERE o.status <> 'cancelled'\n    GROUP BY oi.order_id\n) AS per_order",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q09",
@@ -113,9 +241,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT c.region, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue\nFROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025\nGROUP BY c.region ORDER BY revenue DESC LIMIT 1",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "WITH valid_orders AS (\n    SELECT\n        o.order_id,\n        o.customer_id,\n        o.order_date\n    FROM orders AS o\n    WHERE o.status <> 'cancelled'\n      AND EXTRACT(year FROM o.order_date) = 2025\n)\nSELECT\n    c.region,\n    SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS revenue\nFROM valid_orders AS vo\nJOIN order_items AS oi USING (order_id)\nJOIN customers AS c ON vo.customer_id = c.customer_id\nGROUP BY c.region\nORDER BY revenue DESC\nLIMIT 1",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q10",
@@ -126,9 +261,16 @@
    ],
    "ordered": true,
    "gold_sql": "SELECT p.category, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue\nFROM orders o JOIN order_items i USING (order_id) JOIN products p USING (product_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2026\nGROUP BY p.category ORDER BY revenue DESC",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT\n    p.category,\n    SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS revenue\nFROM orders AS o\nJOIN order_items AS oi USING (order_id)\nJOIN products AS p USING (product_id)\nWHERE o.status <> 'cancelled'\n  AND o.order_date BETWEEN DATE '2026-01-01' AND DATE '2026-06-30'\nGROUP BY p.category\nORDER BY revenue DESC",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q11",
@@ -138,9 +280,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT count(*) FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id)",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT COUNT(*) AS customers_without_any_order\nFROM customers c\nWHERE NOT EXISTS (\n    SELECT 1\n    FROM orders o\n    WHERE o.customer_id = c.customer_id\n)",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q12",
@@ -151,9 +300,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT count(*) FROM customers c\nWHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id AND o.status <> 'cancelled')",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT COUNT(*) AS customers_without_valid_orders\nFROM customers c\nWHERE NOT EXISTS (\n    SELECT 1\n    FROM orders o\n    WHERE o.customer_id = c.customer_id\n      AND o.status <> 'cancelled'\n)",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q13",
@@ -165,9 +321,16 @@
    ],
    "ordered": true,
    "gold_sql": "SELECT p.name, sum(i.quantity) AS units\nFROM orders o JOIN order_items i USING (order_id) JOIN products p USING (product_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025\nGROUP BY p.product_id, p.name ORDER BY units DESC LIMIT 5",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT\n    p.name AS product_name,\n    SUM(oi.quantity) AS units_sold\nFROM order_items AS oi\nJOIN orders AS o\n    ON oi.order_id = o.order_id\nJOIN products AS p\n    ON oi.product_id = p.product_id\nWHERE o.status <> 'cancelled'\n  AND EXTRACT(YEAR FROM o.order_date) = 2025\nGROUP BY p.name\nORDER BY units_sold DESC\nLIMIT 5",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q14",
@@ -178,9 +341,16 @@
    ],
    "ordered": true,
    "gold_sql": "SELECT month(o.order_date) AS m, sum(i.quantity * i.unit_price * (1 - i.discount))\nFROM orders o JOIN order_items i USING (order_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025\nGROUP BY m ORDER BY m",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT \n    EXTRACT(MONTH FROM o.order_date) AS month,\n    SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS revenue\nFROM orders AS o\nJOIN order_items AS oi USING (order_id)\nWHERE o.status <> 'cancelled'\n  AND o.order_date >= DATE '2025-01-01'\n  AND o.order_date < DATE '2026-01-01'\nGROUP BY month\nORDER BY month",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q15",
@@ -192,9 +362,16 @@
    ],
    "ordered": true,
    "gold_sql": "WITH m AS (\n  SELECT month(o.order_date) AS m, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue\n  FROM orders o JOIN order_items i USING (order_id)\n  WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 GROUP BY m)\nSELECT m, revenue, sum(revenue) OVER (ORDER BY m) FROM m ORDER BY m",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "WITH monthly_rev AS (\n    SELECT\n        EXTRACT(MONTH FROM o.order_date)::INTEGER AS month,\n        SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS revenue\n    FROM orders AS o\n    JOIN order_items AS oi USING (order_id)\n    WHERE o.status <> 'cancelled'\n      AND EXTRACT(YEAR FROM o.order_date) = 2025\n    GROUP BY 1\n)\nSELECT\n    m.month,\n    COALESCE(r.revenue, 0) AS revenue,\n    SUM(COALESCE(r.revenue, 0)) OVER (ORDER BY m.month\n                                      ROWS UNBOUNDED PRECEDING) AS running_total\nFROM generate_series(1, 12) AS m(month)\nLEFT JOIN monthly_rev AS r\n       ON r.month = m.month\nORDER BY m.month",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q16",
@@ -206,9 +383,16 @@
    ],
    "ordered": true,
    "gold_sql": "WITH m AS (\n  SELECT date_trunc('month', o.order_date) AS mo, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue\n  FROM orders o JOIN order_items i USING (order_id)\n  WHERE o.status <> 'cancelled' AND o.order_date >= DATE '2025-12-01' GROUP BY mo),\ng AS (SELECT mo, round((revenue / lag(revenue) OVER (ORDER BY mo) - 1) * 100, 1) AS pct FROM m)\nSELECT month(mo), pct FROM g WHERE year(mo) = 2026 ORDER BY mo",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "WITH monthly_rev AS (\n    SELECT\n        DATE_TRUNC('month', o.order_date) AS month_start,\n        SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS revenue\n    FROM orders AS o\n    JOIN order_items AS oi USING (order_id)\n    WHERE o.status <> 'cancelled'\n      AND o.order_date >= DATE '2025-12-01'\n      AND o.order_date <  DATE '2026-07-01'\n    GROUP BY month_start\n)\n\nSELECT\n    EXTRACT(MONTH FROM m.month_start) AS month,\n    ROUND(\n        (m.revenue - p.revenue) / NULLIF(p.revenue, 0) * 100,\n        1\n    ) AS pct_change\nFROM monthly_rev AS m\nLEFT JOIN monthly_rev AS p\n       ON p.month_start = DATE_TRUNC('month', m.month_start - INTERVAL '1' MONTH)\nWHERE m.month_start BETWEEN DATE '2026-01-01' AND DATE '2026-06-01'\nORDER BY m.month_start",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q17",
@@ -219,9 +403,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT count(DISTINCT customer_id) FROM orders WHERE status <> 'cancelled' AND order_date >= DATE '2026-04-01'",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT COUNT(DISTINCT o.customer_id) AS active_customers\nFROM orders AS o\nWHERE o.status <> 'cancelled'\n  AND o.order_date >= DATE '2026-04-01'",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q18",
@@ -232,9 +423,16 @@
    ],
    "ordered": false,
    "gold_sql": "WITH c AS (SELECT customer_id, count(*) AS n FROM orders WHERE status <> 'cancelled' GROUP BY customer_id)\nSELECT round(100.0 * count(*) FILTER (WHERE n >= 2) / count(*), 1) FROM c",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "WITH valid_orders AS (\n    SELECT\n        o.customer_id,\n        COUNT(*) AS order_cnt\n    FROM orders AS o\n    WHERE o.status <> 'cancelled'\n    GROUP BY o.customer_id\n)\nSELECT ROUND(100.0 * \n             COUNT(*) FILTER (WHERE order_cnt >= 2) \n             / COUNT(*), 1) AS repeat_customer_percentage\nFROM valid_orders",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q19",
@@ -245,9 +443,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT round(100.0 * count(DISTINCT r.order_id) / count(DISTINCT o.order_id), 2)\nFROM orders o LEFT JOIN returns r USING (order_id)\nWHERE o.status IN ('delivered', 'returned')",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT ROUND(\n         100.0 *\n         (SELECT COUNT(DISTINCT r.order_id)\n            FROM returns r\n            JOIN orders o ON r.order_id = o.order_id\n           WHERE o.status IN ('delivered', 'returned')\n         ) /\n         NULLIF(\n           (SELECT COUNT(*)\n              FROM orders\n             WHERE status IN ('delivered', 'returned')\n           ), 0\n         ),\n         2\n       ) AS return_rate_percent",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q20",
@@ -258,9 +463,16 @@
    ],
    "ordered": true,
    "gold_sql": "WITH c AS (\n  SELECT p.category, r.reason, count(*) AS n,\n         row_number() OVER (PARTITION BY p.category ORDER BY count(*) DESC) AS rk\n  FROM returns r JOIN products p USING (product_id) GROUP BY p.category, r.reason)\nSELECT category, reason, n FROM c WHERE rk = 1 ORDER BY category",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "WITH return_counts AS (\n    SELECT\n        p.category,\n        r.reason,\n        COUNT(*) AS return_count\n    FROM returns r\n    JOIN products p\n        ON r.product_id = p.product_id\n    GROUP BY p.category, r.reason\n)\nSELECT\n    category,\n    reason,\n    return_count\nFROM (\n    SELECT\n        *,\n        ROW_NUMBER() OVER (PARTITION BY category ORDER BY return_count DESC, reason) AS rn\n    FROM return_counts\n) sub\nWHERE rn = 1\nORDER BY category",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q21",
@@ -271,9 +483,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT p.category,\n       round(100 * (sum(i.quantity * i.unit_price * (1 - i.discount)) - sum(i.quantity * p.unit_cost))\n             / sum(i.quantity * i.unit_price * (1 - i.discount)), 1)\nFROM orders o JOIN order_items i USING (order_id) JOIN products p USING (product_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 GROUP BY p.category",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT\n    p.category,\n    ROUND(\n        (SUM(oi.quantity * oi.unit_price * (1 - oi.discount))\n         - SUM(oi.quantity * p.unit_cost))\n        / NULLIF(SUM(oi.quantity * oi.unit_price * (1 - oi.discount)), 0) * 100,\n        1\n    ) AS gross_margin_percentage\nFROM order_items AS oi\nJOIN orders AS o\n    ON oi.order_id = o.order_id\nJOIN products AS p\n    ON oi.product_id = p.product_id\nWHERE o.status <> 'cancelled'\n  AND EXTRACT(YEAR FROM o.order_date) = 2025\nGROUP BY p.category\nORDER BY p.category",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q22",
@@ -284,9 +503,16 @@
    ],
    "ordered": false,
    "gold_sql": "WITH o AS (SELECT order_id FROM orders WHERE status <> 'cancelled' AND year(order_date) = 2025)\nSELECT round((SELECT sum(quantity * unit_price * (1 - discount)) FROM order_items WHERE order_id IN (SELECT order_id FROM o))\n           - (SELECT coalesce(sum(refund_amount), 0) FROM returns WHERE order_id IN (SELECT order_id FROM o)), 2)",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT ROUND(\n    /* Revenue from valid orders placed in 2025 */\n    COALESCE((\n        SELECT SUM(oi.quantity * oi.unit_price * (1 - oi.discount))\n        FROM order_items oi\n        JOIN orders o ON o.order_id = oi.order_id\n        WHERE o.status <> 'cancelled'\n          AND EXTRACT(year FROM o.order_date) = 2025\n    ), 0)\n    -\n    /* Refunds for those same orders */\n    COALESCE((\n        SELECT SUM(r.refund_amount)\n        FROM returns r\n        JOIN orders o ON o.order_id = r.order_id\n        WHERE o.status <> 'cancelled'\n          AND EXTRACT(year FROM o.order_date) = 2025\n    ), 0)\n, 2) AS net_revenue_after_refunds",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q23",
@@ -296,9 +522,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT count(*) FROM (SELECT order_id FROM payments GROUP BY order_id HAVING count(DISTINCT method) > 1)",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT COUNT(*) AS orders_multiple_payment_methods\nFROM (\n    SELECT p.order_id\n    FROM payments p\n    JOIN orders o ON o.order_id = p.order_id\n    WHERE o.status <> 'cancelled'      -- only valid orders\n    GROUP BY p.order_id\n    HAVING COUNT(DISTINCT p.method) > 1\n) AS multi_method_orders",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q24",
@@ -309,9 +542,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT method, round(100 * sum(amount) / sum(sum(amount)) OVER (), 1)\nFROM payments WHERE year(paid_at) = 2025 GROUP BY method",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "WITH method_totals AS (\n    SELECT\n        method,\n        SUM(amount) AS method_amount\n    FROM payments\n    WHERE EXTRACT(year FROM paid_at) = 2025\n    GROUP BY method\n),\ntotal_amount AS (\n    SELECT SUM(method_amount) AS total FROM method_totals\n)\nSELECT\n    m.method,\n    ROUND(100.0 * m.method_amount / t.total, 1) AS percentage\nFROM method_totals m\nCROSS JOIN total_amount t\nORDER BY percentage DESC",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q25",
@@ -323,9 +563,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT channel, round(avg(ship_date - order_date), 2) FROM orders WHERE ship_date IS NOT NULL GROUP BY channel",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT\n    o.channel,\n    ROUND(AVG(DATEDIFF('day', o.order_date, o.ship_date)), 2) AS average_days\nFROM orders AS o\nWHERE o.status <> 'cancelled'\n  AND o.ship_date IS NOT NULL\nGROUP BY o.channel\nORDER BY o.channel",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q26",
@@ -337,9 +584,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT dayname(order_date) FROM orders WHERE status <> 'cancelled' GROUP BY 1 ORDER BY count(*) DESC LIMIT 1",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT weekday\nFROM (\n    SELECT \n        strftime(order_date, '%A') AS weekday,\n        COUNT(*) AS order_cnt\n    FROM orders\n    WHERE status <> 'cancelled'      -- valid orders\n    GROUP BY weekday\n) AS daily_counts\nORDER BY order_cnt DESC\nLIMIT 1",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q27",
@@ -351,9 +605,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT round(sum(i.quantity * i.unit_price * (1 - i.discount)), 2)\nFROM orders o JOIN order_items i USING (order_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 AND o.promo_code IS NOT NULL",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT ROUND(\n         SUM(oi.quantity * oi.unit_price * (1 - oi.discount)),\n         2\n       ) AS revenue_2025_promo\nFROM orders AS o\nJOIN order_items AS oi USING (order_id)\nWHERE o.status <> 'cancelled'\n  AND EXTRACT(year FROM o.order_date) = 2025\n  AND o.promo_code IS NOT NULL",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q28",
@@ -364,9 +625,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT promo_code, count(*) FROM orders WHERE status <> 'cancelled' AND promo_code IS NOT NULL\nGROUP BY promo_code ORDER BY count(*) DESC LIMIT 1",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "WITH valid_orders AS (\n    SELECT\n        order_id,\n        promo_code\n    FROM orders\n    WHERE status <> 'cancelled'\n      AND promo_code IS NOT NULL\n)\nSELECT\n    promo_code,\n    COUNT(*) AS order_count\nFROM valid_orders\nGROUP BY promo_code\nORDER BY order_count DESC\nLIMIT 1",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q29",
@@ -377,9 +645,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT count(*) FROM customers WHERE referred_by IS NOT NULL",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT COUNT(*) AS referred_customers\nFROM customers\nWHERE referred_by IS NOT NULL",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q30",
@@ -390,9 +665,16 @@
    ],
    "ordered": true,
    "gold_sql": "SELECT r.customer_id, r.name, count(*) AS n\nFROM customers c JOIN customers r ON c.referred_by = r.customer_id\nGROUP BY r.customer_id, r.name ORDER BY n DESC, r.customer_id LIMIT 3",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT \n    ref.customer_id AS referrer_customer_id,\n    ref.name,\n    COUNT(*) AS num_referred\nFROM customers AS ref\nJOIN customers AS c ON c.referred_by = ref.customer_id\nGROUP BY ref.customer_id, ref.name\nORDER BY num_referred DESC, ref.customer_id ASC\nLIMIT 3",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q31",
@@ -404,9 +686,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT round(sum(i.quantity * i.unit_price * (1 - i.discount)), 2)\nFROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 AND c.referred_by IS NOT NULL",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT ROUND(SUM(oi.quantity * oi.unit_price * (1 - oi.discount)), 2) AS revenue_2025_referred\nFROM customers AS c\nJOIN orders AS o ON c.customer_id = o.customer_id\nJOIN order_items AS oi ON o.order_id = oi.order_id\nWHERE c.referred_by IS NOT NULL\n  AND o.status <> 'cancelled'\n  AND o.order_date >= DATE '2025-01-01'\n  AND o.order_date < DATE '2026-01-01'",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q32",
@@ -417,9 +706,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT c.segment, round(sum(i.quantity * i.unit_price * (1 - i.discount)) / count(DISTINCT o.order_id), 2)\nFROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 GROUP BY c.segment",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "WITH valid_orders AS (\n    SELECT\n        o.order_id,\n        o.customer_id\n    FROM orders o\n    WHERE o.status <> 'cancelled'\n      AND EXTRACT(year FROM o.order_date) = 2025\n),\norder_revenue AS (\n    SELECT\n        oi.order_id,\n        SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS revenue\n    FROM order_items oi\n    JOIN valid_orders vo USING (order_id)\n    GROUP BY oi.order_id\n)\nSELECT\n    c.segment,\n    ROUND(SUM(orv.revenue) / COUNT(orv.order_id)::DECIMAL, 2) AS aov\nFROM order_revenue orv\nJOIN valid_orders vo USING (order_id)\nJOIN customers c ON vo.customer_id = c.customer_id\nGROUP BY c.segment\nORDER BY c.segment",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q33",
@@ -431,9 +727,16 @@
    ],
    "ordered": false,
    "gold_sql": "WITH f AS (SELECT customer_id, min(order_date) AS first_order FROM orders WHERE status <> 'cancelled' GROUP BY customer_id)\nSELECT count(*) FROM customers c JOIN f USING (customer_id)\nWHERE year(c.signup_date) = 2025 AND date_trunc('month', f.first_order) = date_trunc('month', c.signup_date)",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "WITH valid_orders AS (\n    SELECT\n        o.customer_id,\n        o.order_date\n    FROM orders o\n    WHERE o.status <> 'cancelled'\n),\nfirst_orders AS (\n    SELECT\n        customer_id,\n        MIN(order_date) AS first_order_date\n    FROM valid_orders\n    GROUP BY customer_id\n)\nSELECT\n    COUNT(*) AS customers_first_order_same_month\nFROM (\n    SELECT\n        c.customer_id,\n        c.signup_date,\n        f.first_order_date\n    FROM customers c\n    JOIN first_orders f\n        ON c.customer_id = f.customer_id\n    WHERE EXTRACT(year FROM c.signup_date) = 2025\n      AND DATE_TRUNC('month', c.signup_date) = DATE_TRUNC('month', f.first_order_date)\n) matched",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q34",
@@ -446,8 +749,15 @@
    "ordered": false,
    "gold_sql": "WITH f AS (SELECT customer_id, min(order_date) AS first_order FROM orders WHERE status <> 'cancelled' GROUP BY customer_id)\nSELECT round(avg(f.first_order - c.signup_date), 1) FROM customers c JOIN f USING (customer_id)",
    "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": false,
+     "category": "unknown_identifier",
+     "sql": "WITH first_orders AS (\n    SELECT\n        c.customer_id,\n        DATE_DIFF('day', c.signup_date, MIN(o.order_date)) AS days_to_first\n    FROM customers c\n    JOIN orders o\n        ON c.customer_id = o.customer_id\n    WHERE o.status <> 'cancelled'          -- valid orders only\n    GROUP BY c.customer_id\n)\nSELECT ROUND(AVG(days_to_first)::NUMERIC, 1) AS avg_days_signup_to_first_order\nFROM first_orders",
+     "detail": "Binder Error: column \"signup_date\" must appear in the GROUP BY clause or must be part of an aggregate function."
+    }
+   }
   },
   {
    "id": "q35",
@@ -459,9 +769,16 @@
    ],
    "ordered": true,
    "gold_sql": "WITH r AS (\n  SELECT p.category, p.name, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue,\n         row_number() OVER (PARTITION BY p.category ORDER BY sum(i.quantity * i.unit_price * (1 - i.discount)) DESC) AS rk\n  FROM orders o JOIN order_items i USING (order_id) JOIN products p USING (product_id)\n  WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 GROUP BY p.category, p.product_id, p.name)\nSELECT category, name, revenue FROM r WHERE rk = 1 ORDER BY category",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "WITH valid_orders AS (\n    SELECT order_id\n    FROM orders\n    WHERE status <> 'cancelled'\n      AND EXTRACT(year FROM order_date) = 2025\n),\nproduct_rev AS (\n    SELECT\n        p.category,\n        p.name AS product_name,\n        SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS revenue\n    FROM order_items oi\n    JOIN valid_orders vo ON oi.order_id = vo.order_id\n    JOIN products p ON oi.product_id = p.product_id\n    GROUP BY p.category, p.name\n),\nranked AS (\n    SELECT\n        category,\n        product_name,\n        revenue,\n        ROW_NUMBER() OVER (PARTITION BY category ORDER BY revenue DESC) AS rn\n    FROM product_rev\n)\nSELECT\n    category,\n    product_name,\n    revenue\nFROM ranked\nWHERE rn = 1\nORDER BY category",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q36",
@@ -472,9 +789,16 @@
    ],
    "ordered": false,
    "gold_sql": "WITH v AS (\n  SELECT o.order_id, sum(i.quantity * i.unit_price * (1 - i.discount)) AS value\n  FROM orders o JOIN order_items i USING (order_id)\n  WHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 GROUP BY o.order_id)\nSELECT round(median(value), 2) FROM v",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "WITH order_vals AS (\n    SELECT\n        o.order_id,\n        SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS order_value\n    FROM orders AS o\n    JOIN order_items AS oi USING (order_id)\n    WHERE o.status <> 'cancelled'\n      AND EXTRACT(year FROM o.order_date) = 2025\n    GROUP BY o.order_id\n)\nSELECT\n    ROUND(\n        PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY order_value),\n        2\n    ) AS median_order_value\nFROM order_vals",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q37",
@@ -485,9 +809,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT count(*) FROM (SELECT customer_id FROM orders WHERE status <> 'cancelled' GROUP BY customer_id HAVING count(*) > 20)",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT COUNT(*) AS customers_with_over_20_valid_orders\nFROM (\n    SELECT customer_id\n    FROM orders\n    WHERE status <> 'cancelled'\n    GROUP BY customer_id\n    HAVING COUNT(*) > 20\n) AS sub",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q38",
@@ -499,9 +830,16 @@
    ],
    "ordered": true,
    "gold_sql": "SELECT c.customer_id, c.name, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue\nFROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)\nWHERE o.status <> 'cancelled' GROUP BY c.customer_id, c.name ORDER BY revenue DESC LIMIT 10",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT\n    c.customer_id,\n    c.name,\n    SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS revenue\nFROM customers AS c\nJOIN orders AS o\n    ON o.customer_id = c.customer_id\nJOIN order_items AS oi\n    ON oi.order_id = o.order_id\nWHERE o.status <> 'cancelled'\nGROUP BY c.customer_id, c.name\nORDER BY revenue DESC\nLIMIT 10",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q39",
@@ -513,9 +851,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT count(DISTINCT c.state) FROM orders o JOIN customers c USING (customer_id)\nWHERE o.status <> 'cancelled' AND o.order_date >= DATE '2026-06-01' AND o.order_date < DATE '2026-07-01'",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT COUNT(DISTINCT c.state) AS distinct_state_count\nFROM orders AS o\nJOIN customers AS c\n  ON o.customer_id = c.customer_id\nWHERE o.status <> 'cancelled'\n  AND o.order_date >= DATE '2026-06-01'\n  AND o.order_date <  DATE '2026-07-01'",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q40",
@@ -526,9 +871,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT count(*) FROM orders WHERE status <> 'cancelled' AND year(order_date) = 2025 AND dayofweek(order_date) IN (0, 6)",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT COUNT(*) AS weekend_valid_orders\nFROM orders\nWHERE status <> 'cancelled'\n  AND EXTRACT(YEAR FROM order_date) = 2025\n  AND EXTRACT(DOW FROM order_date) IN (0, 6)",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q41",
@@ -539,9 +891,16 @@
    ],
    "ordered": false,
    "gold_sql": "WITH r AS (\n  SELECT year(o.order_date) AS y, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue\n  FROM orders o JOIN order_items i USING (order_id)\n  WHERE o.status <> 'cancelled'\n    AND ((o.order_date BETWEEN DATE '2025-11-20' AND DATE '2025-12-22') OR (o.order_date BETWEEN DATE '2024-11-20' AND DATE '2024-12-22'))\n  GROUP BY y)\nSELECT round(((SELECT revenue FROM r WHERE y = 2025) / (SELECT revenue FROM r WHERE y = 2024) - 1) * 100, 1)",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT\n    ROUND(\n        ((rev2025 - rev2024) / NULLIF(rev2024, 0)) * 100,\n        1\n    ) AS revenue_growth_pct\nFROM (\n    SELECT\n        SUM(CASE\n                WHEN EXTRACT(YEAR FROM o.order_date) = 2024\n                THEN oi.quantity * oi.unit_price * (1 - oi.discount)\n                ELSE 0\n            END) AS rev2024,\n        SUM(CASE\n                WHEN EXTRACT(YEAR FROM o.order_date) = 2025\n                THEN oi.quantity * oi.unit_price * (1 - oi.discount)\n                ELSE 0\n            END) AS rev2025\n    FROM orders o\n    JOIN order_items oi USING (order_id)\n    WHERE o.status <> 'cancelled'\n      AND (\n            o.order_date BETWEEN DATE '2024-11-20' AND DATE '2024-12-22'\n         OR o.order_date BETWEEN DATE '2025-11-20' AND DATE '2025-12-22'\n          )\n) t",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q42",
@@ -551,9 +910,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT count(*) FROM orders WHERE status IN ('shipped', 'delivered', 'returned') AND ship_date IS NULL",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT COUNT(*) AS orders_missing_ship_date\nFROM orders\nWHERE status IN ('shipped', 'delivered', 'returned')\n  AND ship_date IS NULL",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q43",
@@ -564,9 +930,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT count(*) FROM products p WHERE NOT EXISTS (\n  SELECT 1 FROM order_items i JOIN orders o USING (order_id) WHERE i.product_id = p.product_id AND o.status <> 'cancelled')",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT COUNT(*) AS unsold_product_count\nFROM products p\nWHERE NOT EXISTS (\n    SELECT 1\n    FROM order_items oi\n    JOIN orders o ON oi.order_id = o.order_id\n    WHERE o.status <> 'cancelled'\n      AND oi.product_id = p.product_id\n)",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q44",
@@ -577,8 +950,15 @@
    "ordered": false,
    "gold_sql": "SELECT round(avg(discount) * 100, 2) FROM order_items WHERE discount > 0",
    "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": false,
+     "category": "wrong_values",
+     "sql": "SELECT ROUND(AVG(oi.discount) * 100, 2) AS avg_discount_pct\nFROM order_items AS oi\nJOIN orders AS o\n  ON oi.order_id = o.order_id\nWHERE o.status <> 'cancelled'\n  AND oi.discount > 0",
+     "detail": "same shape, different values"
+    }
+   }
   },
   {
    "id": "q45",
@@ -589,9 +969,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT round(100 * sum(i.quantity * i.unit_price * (1 - i.discount)) FILTER (WHERE c.segment = 'enterprise')\n             / sum(i.quantity * i.unit_price * (1 - i.discount)), 1)\nFROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "WITH valid_orders AS (\n    SELECT o.order_id, o.customer_id\n    FROM orders o\n    WHERE o.status <> 'cancelled'\n      AND EXTRACT(year FROM o.order_date) = 2025\n),\norder_revenue AS (\n    SELECT vo.order_id,\n           SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS revenue\n    FROM valid_orders vo\n    JOIN order_items oi USING (order_id)\n    GROUP BY vo.order_id\n),\ntotal_rev AS (\n    SELECT SUM(revenue) AS total_revenue\n    FROM order_revenue\n),\nenterprise_rev AS (\n    SELECT SUM(orv.revenue) AS enterprise_revenue\n    FROM order_revenue orv\n    JOIN valid_orders vo ON vo.order_id = orv.order_id\n    JOIN customers c ON c.customer_id = vo.customer_id\n    WHERE c.segment = 'enterprise'\n)\nSELECT ROUND((enterprise_rev.enterprise_revenue / total_rev.total_revenue) * 100, 1) AS enterprise_revenue_pct\nFROM total_rev, enterprise_rev",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q46",
@@ -602,9 +989,16 @@
    ],
    "ordered": true,
    "gold_sql": "SELECT reason, sum(refund_amount) AS t FROM returns WHERE year(returned_at) = 2025 GROUP BY reason ORDER BY t DESC",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT\n    reason,\n    SUM(refund_amount) AS total_refund\nFROM returns\nWHERE EXTRACT(year FROM returned_at) = 2025\nGROUP BY reason\nORDER BY total_refund DESC",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q47",
@@ -616,9 +1010,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT c.city, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue\nFROM orders o JOIN order_items i USING (order_id) JOIN products p USING (product_id) JOIN customers c USING (customer_id)\nWHERE o.status <> 'cancelled' AND year(o.order_date) = 2025 AND p.category = 'Outdoors'\nGROUP BY c.city ORDER BY revenue DESC LIMIT 1",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT\n    c.city,\n    SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS revenue\nFROM orders AS o\nJOIN order_items AS oi USING (order_id)\nJOIN products AS p ON oi.product_id = p.product_id\nJOIN customers AS c ON o.customer_id = c.customer_id\nWHERE o.status <> 'cancelled'\n  AND EXTRACT(year FROM o.order_date) = 2025\n  AND p.category = 'Outdoors'\nGROUP BY c.city\nORDER BY revenue DESC\nLIMIT 1",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q48",
@@ -630,9 +1031,16 @@
    ],
    "ordered": true,
    "gold_sql": "SELECT year(order_date) AS y, round(100.0 * count(*) FILTER (WHERE channel = 'app') / count(*), 1)\nFROM orders WHERE status <> 'cancelled' GROUP BY y ORDER BY y",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT\n    EXTRACT(year FROM order_date) AS year,\n    ROUND(100.0 * SUM(CASE WHEN channel = 'app' THEN 1 ELSE 0 END) / COUNT(*), 1) AS percentage\nFROM orders\nWHERE status <> 'cancelled'\nGROUP BY year\nORDER BY year",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q49",
@@ -643,9 +1051,16 @@
    ],
    "ordered": false,
    "gold_sql": "SELECT count(*) FROM (\n  SELECT customer_id FROM orders WHERE status <> 'cancelled' AND year(order_date) = 2024\n  INTERSECT\n  SELECT customer_id FROM orders WHERE status <> 'cancelled' AND year(order_date) = 2025)",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "SELECT COUNT(DISTINCT o2024.customer_id) AS customers_2024_and_2025\nFROM (\n    SELECT DISTINCT customer_id\n    FROM orders\n    WHERE status <> 'cancelled'\n      AND EXTRACT(year FROM order_date) = 2024\n) AS o2024\nJOIN (\n    SELECT DISTINCT customer_id\n    FROM orders\n    WHERE status <> 'cancelled'\n      AND EXTRACT(year FROM order_date) = 2025\n) AS o2025\nUSING (customer_id)",
+     "detail": ""
+    }
+   }
   },
   {
    "id": "q50",
@@ -657,9 +1072,16 @@
    ],
    "ordered": true,
    "gold_sql": "WITH c AS (\n  SELECT c.customer_id, c.region, sum(i.quantity * i.unit_price * (1 - i.discount)) AS revenue\n  FROM orders o JOIN order_items i USING (order_id) JOIN customers c USING (customer_id)\n  WHERE o.status <> 'cancelled' GROUP BY c.customer_id, c.region)\nSELECT region, round(avg(revenue), 2) AS a FROM c GROUP BY region ORDER BY a DESC",
-   "solved_by": 0,
-   "attempted_by": 0,
-   "results": {}
+   "solved_by": 1,
+   "attempted_by": 1,
+   "results": {
+    "groq/openai/gpt-oss-120b@context": {
+     "correct": true,
+     "category": "correct",
+     "sql": "WITH valid_orders AS (\n    SELECT order_id, customer_id\n    FROM orders\n    WHERE status <> 'cancelled'\n),\ncustomer_revenue AS (\n    SELECT\n        vo.customer_id,\n        SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS revenue,\n        COUNT(DISTINCT vo.order_id) AS order_cnt\n    FROM valid_orders vo\n    JOIN order_items oi USING (order_id)\n    GROUP BY vo.customer_id\n),\nregion_customer_rev AS (\n    SELECT\n        c.region,\n        cr.revenue\n    FROM customer_revenue cr\n    JOIN customers c USING (customer_id)\n    WHERE cr.order_cnt >= 1\n)\nSELECT\n    region,\n    ROUND(AVG(revenue), 2) AS average_lifetime_revenue\nFROM region_customer_rev\nGROUP BY region\nORDER BY average_lifetime_revenue DESC",
+     "detail": ""
+    }
+   }
   }
  ],
  "ablation": [],
